@@ -8,30 +8,29 @@ package chatapplication_server.components.base;
 import chatapplication_server.exception.*;
 
 /**
- * This interface is supported by all ChatApplication components that support automatic start-up and 
+ * This interface is supported by all ChatApplication components that support automatic start-up and
  * shut down by the Component Manager.
- *
+ * <p>
  * It contains the method declarations for initializing, shutting down and running a component.
- * 
+ *
  * @author atgianne
  */
-public interface IComponent 
-{
+public interface IComponent {
     /**
      * Method declaration for initializing the component
      * IMPORTANT This method must not block
      */
-    abstract public void initialize() throws ComponentInitException, PropertyLoadException;
-    
+    void initialize() throws ComponentInitException, PropertyLoadException;
+
     /**
      * Method declaration for signaling the component that it must terminate
      * its execution.
      */
-    abstract public void shutdown();
-    
+    void shutdown();
+
     /**
      * Method declaration of the component's main function containing the
      * main component logic.
      */
-    abstract public void componentMain();
+    void componentMain();
 }

@@ -12,13 +12,12 @@ import java.io.Serializable;
  * Clients and the Server.
  * When talking from a Java Client to a Java Server a lot easier to pass Java objects, no
  * need to count bytes or to wait for a line feed at the end of the frame
- * 
+ *
  * @author atgianne
  */
-public class ChatMessage implements Serializable 
-{
+public class ChatMessage implements Serializable {
     protected static final long serialVersionUID = 1112122200L;
- 
+
     // The different types of message sent by the Client
 
     // WHOISIN to receive the list of the users connected
@@ -27,13 +26,12 @@ public class ChatMessage implements Serializable
 
     // LOGOUT to disconnect from the Server
 
-    public static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2,PRIVATEMESSAGE = 3;
+    public static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2, PRIVATEMESSAGE = 3;
 
-    private int type;
+    private final int type;
 
-    private String message;
+    private final String message;
 
-     
 
     // constructor
 
@@ -45,7 +43,6 @@ public class ChatMessage implements Serializable
 
     }
 
-     
 
     // getters
 

@@ -7,63 +7,62 @@ package chatapplication_server.exception;
 
 /**
  * This kind of exception is thrown whenever an attempt to load an invalid configuration property given by the user when booting up the ChatApplication Server side.
- * 
+ * <p>
  * This mainly has to do with the loading of the server IP and the port number.
- * 
+ *
  * @author atgianne
  */
-public class PropertyLoadException extends Exception
-{
-     /** The message contained in the exception */
+public class PropertyLoadException extends Exception {
+    /**
+     * The message contained in the exception
+     */
     String msg;
-    
-    /** The kind of property for which an exception was thrown */
+
+    /**
+     * The kind of property for which an exception was thrown
+     */
     String property;
-    
-    /** 
+
+    /**
      * Creates a new instance of PropertyLoadException
      *
      * @param propertyID String describing the kind of loaded property
-     * @param m String describing the type of exception error
+     * @param m          String describing the type of exception error
      */
-    public PropertyLoadException( String propertyID, String m ) 
-    {        
+    public PropertyLoadException(String propertyID, String m) {
         /** Get the suitable property given by the user */
-        if ( propertyID.equals( "Server.PortNumber" ) )
+        if (propertyID.equals("Server.PortNumber"))
             property = "'Port'";
-        else if (propertyID.equals( "ConnectionHandlers.Number" ))
+        else if (propertyID.equals("ConnectionHandlers.Number"))
             property = "'ConnectionHandlers'";
         else
             property = "Unspecified Property Name";
     }
-    
+
     /**
      * Standard Object.toString implementation.
      *
-     * @return A string representation of the exception message 
+     * @return A string representation of the exception message
      */
-    public String toString()
-    {
+    public String toString() {
         return msg;
     }
-    
+
     /**
      * Method for returning the correct name of the property value as used in the lotus-system.propery file.
      *
      * @return A string representation of the property name
      */
-    public String propertyToString()
-    {
+    public String propertyToString() {
         return property;
     }
-    
+
     /**
      * Standard Exception.getMessage override implementation
      *
      * @return The exception message
      */
-    public String getMessage()
-    {
+    public String getMessage() {
         return msg;
     }
 }
