@@ -5,7 +5,6 @@
  */
 package chatapplication_server.components;
 
-import chatapplication_server.ComponentManager;
 import chatapplication_server.components.base.IComponent;
 import chatapplication_server.exception.ComponentInitException;
 import chatapplication_server.exception.PropertyLoadException;
@@ -70,7 +69,7 @@ public class ChatApplicationServerPropertiesLoader implements IComponent {
         configManager = ConfigManager.getInstance();
 
         /** The default value of the lotus-server.properties folder is "dist/chatapplication-server.properties" */
-        configManager.setDefaultValue("PropertiesFile.Folder", "chatapplication.properties");
+        configManager.setDefaultValue("PropertiesFile.Folder", "dist/chatapplication.properties");
 
         /** Try to load the chatapplication-server.properties file */
         try {
