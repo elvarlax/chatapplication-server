@@ -72,3 +72,12 @@ fabric.properties
 
 # vscode
 .vscode/
+
+# custom settings
+.settings/
+
+# netbeans
+nbproject/
+
+# temp files
+.build/
