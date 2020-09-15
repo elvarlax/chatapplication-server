@@ -8,6 +8,11 @@ Lab 1 - Establishing Secure Message Exchange
 Add here how to setup!
 ```
 
+## build
+```bash
+javac -d ./build **/*.java && cd ./build && jar cvf ChatApp.jar *
+```
+
 ## Usage
 
 ```java
