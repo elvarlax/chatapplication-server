@@ -80,4 +80,4 @@ fabric.properties
 nbproject/
 
 # temp files
-.build/
+build/
