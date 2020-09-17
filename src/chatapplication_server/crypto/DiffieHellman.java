@@ -2,6 +2,8 @@ package chatapplication_server.crypto;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 
 import org.bouncycastle.util.BigIntegers;
 
@@ -10,14 +12,12 @@ import org.bouncycastle.util.BigIntegers;
  */
 public class DiffieHellman {
   
-    private static final SecureRandom RND = new SecureRandom();
-    private static final int SECRET_BIT_COUNT = 2048;
     /**
-    * The prime for standardized 2048-bit MODP Group. 
-    * (<a href="https://www.ietf.org/rfc/rfc3526.txt">RFC 3526</a>)<p>
-    *
-    * Belongs to a group with id 14.
-    */
+     * The prime for standardized 2048-bit MODP Group. 
+     * (<a href="https://www.ietf.org/rfc/rfc3526.txt">RFC 3526</a>)<p>
+     *
+     * Belongs to a group with id 14.
+     */
     private static final String MODP_2048_PRIME_HEX = (
         "FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1" +
         "29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD" +
@@ -31,27 +31,32 @@ public class DiffieHellman {
         "DE2BCBF6 95581718 3995497C EA956AE5 15D22618 98FA0510" +
         "15728E5A 8AACAA68 FFFFFFFF FFFFFFFF")
         .replaceAll("\\s", "");
-
+        
     public static final BigInteger P = new BigInteger(MODP_2048_PRIME_HEX, 16);
     public static final BigInteger G = BigInteger.valueOf(2L);
+    private static final SecureRandom RND = new SecureRandom();
+
+    private DiffieHellman() {}
 
     /**
      * Generates a random number between 0 and 2^{@value #SECRET_BIT_COUNT}.<p>
      */
-    public static BigInteger generateRandomSecret()
-    {
-        return BigIntegers.createRandomBigInteger(SECRET_BIT_COUNT, RND);
+    public static BigInteger generateRandomSecret() {
+        BigInteger one = BigInteger.valueOf(1);
+        return BigIntegers.createRandomInRange(one, P.subtract(one), RND);
     }
 
     /**
      * Computes a common secret key K such that K = | partiakKey^(secret) | mod p
      * @param partialKey a value received from another entity
      * @param secret own secret key
-     * @return common secret key
+     * @return a common secret key hashed with sha-256
      */
-    public static BigInteger getCommonKey(BigInteger partialKey, BigInteger secret)
-    {
-        return partialKey.modPow(secret, P);
+    public static byte[] getSharedKey(BigInteger partialKey, BigInteger secret) throws GeneralSecurityException {
+        BigInteger sharedKey = partialKey.modPow(secret, P);
+        MessageDigest digest = MessageDigest.getInstance("SHA256");
+        byte[] hash = digest.digest(sharedKey.toByteArray());
+        return hash;
     }
 
     /**
@@ -59,8 +64,7 @@ public class DiffieHellman {
      * @param secret own secret key
      * @return a partial key
      */
-    public static BigInteger getPartialKey(BigInteger secret)
-    {
+    public static BigInteger getPartialKey(BigInteger secret) {
         return G.modPow(secret, P);
     }
 }
