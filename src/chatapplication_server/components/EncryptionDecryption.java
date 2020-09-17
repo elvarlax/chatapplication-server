@@ -1,8 +1,14 @@
 package chatapplication_server.components;
 
+import java.math.BigInteger;
+
+import org.bouncycastle.util.BigIntegers;
+
+
 public class EncryptionDecryption {
     private static String sharedKey = "";
-    public static void setSharedKey(String key){
+    public static void setSharedKey(BigInteger key){
+
 
     }
     public static String Encrypt(String message){
