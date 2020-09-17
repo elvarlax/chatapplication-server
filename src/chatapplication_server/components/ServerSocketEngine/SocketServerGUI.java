@@ -5,7 +5,6 @@
  */
 package chatapplication_server.components.ServerSocketEngine;
 
-import chatapplication_server.ChatApplicationServerEngine;
 import chatapplication_server.ComponentManager;
 import chatapplication_server.components.ConfigManager;
 import chatapplication_server.components.base.IComponent;
@@ -29,6 +28,11 @@ import javax.swing.JTextField;
  * @author atgianne
  */
 public class SocketServerGUI extends JFrame implements IComponent, ActionListener, WindowListener {
+    /**
+     *
+     */
+    private static final long serialVersionUID = 4551507965651961623L;
+
     /**
      * Instance of the ConfigManager component
      */
@@ -135,9 +139,8 @@ public class SocketServerGUI extends JFrame implements IComponent, ActionListene
         }
 
         /** Otherwise, start the Socket Server... */
-        int port;
         try {
-            port = Integer.parseInt(tPortNumber.getText().trim());
+            Integer.parseInt(tPortNumber.getText().trim());
         } catch (Exception er) {
             appendEvent("Invalid port number");
             return;

@@ -6,7 +6,14 @@
 package chatapplication_server;
 
 import java.io.IOException;
+import java.security.Security;
 import java.util.LinkedList;
+import java.math.BigInteger;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+import chatapplication_server.crypto.DiffieHellman;
+import chatapplication_server.crypto.StreamCipher;
 
 /**
  * ChatApplicationServerEngine class is responsible for providing the appropriate interface in order for the system to correctly start up and
@@ -56,7 +63,7 @@ public class ChatApplicationServerEngine {
 
         /** Setup the list of the ChatApplicationServer system components that we want to run */
         /** IMPORTANT Add them in the order that they should be started */
-        LinkedList ourComponents = new LinkedList();
+        LinkedList<String> ourComponents = new LinkedList<String>();
         ourComponents.add("chatapplication_server.components.ConfigManager");
         ourComponents.add("chatapplication_server.components.ChatApplicationServerPropertiesLoader");
         ourComponents.add("chatapplication_server.components.ServerSocketEngine.SocketServerGUI");
@@ -84,7 +91,7 @@ public class ChatApplicationServerEngine {
 
         /** Setup the list of the ChatApplicationServer system components that we want to run */
         /** IMPORTANT Add them in the order that they should be started */
-        LinkedList ourComponents = new LinkedList();
+        LinkedList<String> ourComponents = new LinkedList<String>();
         ourComponents.add("chatapplication_server.components.ConfigManager");
         ourComponents.add("chatapplication_server.components.ChatApplicationServerPropertiesLoader");
         ourComponents.add("chatapplication_server.components.ClientSocketEngine.ClientSocketGUI");
@@ -146,6 +153,9 @@ public class ChatApplicationServerEngine {
         return "";
     }
 
+    public static void SetupSecurity() {
+        Security.addProvider(new BouncyCastleProvider());
+    }
     /**
      * Method implementation of the main logic of the ChatApplicationServer system.
      * IMPORTANT This method can only be called by a user in the case of a boot up procedure through a command terminal
@@ -153,10 +163,13 @@ public class ChatApplicationServerEngine {
      * @param args The command line arguments
      */
     public static void main(String[] args) {
-        String mode = getCommandLineArgPasswd(args);
 
+        String mode = getCommandLineArgPasswd(args);
+        
         System.out.println(args[0]);
         System.out.println(mode);
+
+        SetupSecurity();
 
         if (mode.equals("Server")) {
             /** Boot up the ChatApplicationServer system... */

@@ -12,6 +12,10 @@ package chatapplication_server.exception;
  */
 public class ComponentInitException extends Exception {
     /**
+     *
+     */
+    private static final long serialVersionUID = -4940548529528562873L;
+    /**
      * The message contained in the exception
      */
     String msg;

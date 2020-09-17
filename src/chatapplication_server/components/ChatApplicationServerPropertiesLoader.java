@@ -5,7 +5,6 @@
  */
 package chatapplication_server.components;
 
-import chatapplication_server.ComponentManager;
 import chatapplication_server.components.base.IComponent;
 import chatapplication_server.exception.ComponentInitException;
 import chatapplication_server.exception.PropertyLoadException;

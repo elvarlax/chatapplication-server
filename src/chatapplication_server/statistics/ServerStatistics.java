@@ -34,12 +34,12 @@ public class ServerStatistics {
         String date;
 
         /** Create the String representation of the current date and time */
-        date = new Integer(Calendar.getInstance().get(Calendar.DAY_OF_MONTH)).toString() + "/" +
-                new Integer(Calendar.getInstance().get(Calendar.MONTH) + 1).toString() + "/" +
-                new Integer(Calendar.getInstance().get(Calendar.YEAR)) + "---" +
-                new Integer(Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) + ":" +
-                new Integer(Calendar.getInstance().get(Calendar.MINUTE)) + ":" +
-                new Integer(Calendar.getInstance().get(Calendar.SECOND));
+        date = Integer.toString(Calendar.getInstance().get(Calendar.DAY_OF_MONTH)) + "/" +
+                Integer.toString(Calendar.getInstance().get(Calendar.MONTH) + 1) + "/" +
+                Integer.toString(Calendar.getInstance().get(Calendar.YEAR)) + "---" +
+                Integer.toString(Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) + ":" +
+                Integer.toString(Calendar.getInstance().get(Calendar.MINUTE)) + ":" +
+                Integer.toString(Calendar.getInstance().get(Calendar.SECOND));
 
         return date;
     }

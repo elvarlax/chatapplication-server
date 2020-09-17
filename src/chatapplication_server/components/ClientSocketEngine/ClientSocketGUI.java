@@ -8,8 +8,6 @@ package chatapplication_server.components.ClientSocketEngine;
 import SocketActionMessages.ChatMessage;
 import chatapplication_server.ComponentManager;
 import chatapplication_server.components.ConfigManager;
-import chatapplication_server.components.ServerSocketEngine.SocketServerEngine;
-import chatapplication_server.components.ServerSocketEngine.SocketServerGUI;
 import chatapplication_server.components.base.IComponent;
 import chatapplication_server.exception.ComponentInitException;
 
@@ -24,7 +22,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.awt.event.WindowStateListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -38,6 +35,11 @@ import javax.swing.SwingConstants;
  * @author atgianne
  */
 public class ClientSocketGUI extends JFrame implements IComponent, ActionListener, WindowListener {
+    /**
+     *
+     */
+    private static final long serialVersionUID = -7750342437091403710L;
+
     /**
      * Instance of the ConfigManager component
      */
@@ -238,7 +240,6 @@ public class ClientSocketGUI extends JFrame implements IComponent, ActionListene
     public void append(String str) {
         String NewStr = " ";
         String NewStr2 = " ";
-        int j = 0;
         // parse string
         String[] stringArray = str.split(",");
         if ("0".equals(stringArray[0]))
@@ -319,7 +320,7 @@ public class ClientSocketGUI extends JFrame implements IComponent, ActionListene
 
         /** P2P Chat Window */
         if (o == p2pClient) {
-            P2PClient p2p = new P2PClient();
+            new P2PClient();
         }
 
         /** If this is a login operation... */

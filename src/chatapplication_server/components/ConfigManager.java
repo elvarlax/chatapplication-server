@@ -20,7 +20,7 @@ public class ConfigManager implements IComponent {
     /**
      * HasMap used for storing all the config values
      */
-    private HashMap configValues;
+    private HashMap<String, String> configValues;
 
     /**
      * Singleton Instance of this component
@@ -52,7 +52,7 @@ public class ConfigManager implements IComponent {
      */
     public void initialize() {
         /** Initialize the map holding all the given system configuration values... */
-        configValues = new HashMap();
+        configValues = new HashMap<String, String>();
     }
 
     /**

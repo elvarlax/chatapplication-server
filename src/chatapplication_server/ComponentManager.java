@@ -25,7 +25,7 @@ public class ComponentManager {
     /**
      * The list of all active system components
      */
-    LinkedList activeComponents = new LinkedList();
+    LinkedList<IComponent> activeComponents = new LinkedList<IComponent>();
 
     /**
      * Boolean flag set to TRUE if we are throwing a fatalException
@@ -66,7 +66,7 @@ public class ComponentManager {
      * @param componentNames A list containing the names of the components to be started
      * @retun FALSE on error; TRUE otherwise
      */
-    public boolean startComponentsList(LinkedList componentNames) {
+    public boolean startComponentsList(LinkedList<String> componentNames) {
         String nextComponent;
 
         try {
@@ -74,7 +74,7 @@ public class ComponentManager {
                 nextComponent = (String) componentNames.get(i);
 
                 /** Try to instansiate the component and get its IComponent interface */
-                Class c = Class.forName(nextComponent);
+                var c = Class.forName(nextComponent);
                 Method m = c.getMethod("getInstance");
                 IComponent com = (IComponent) m.invoke(null);
 
@@ -111,7 +111,7 @@ public class ComponentManager {
     public boolean startComponent(String componentName) {
         try {
             /** Try to instansiate the component and get its IComponent interface */
-            Class c = Class.forName(componentName);
+            var c = Class.forName(componentName);
             Method m = c.getMethod("getInstance");
             IComponent com = (IComponent) m.invoke(null);
 
