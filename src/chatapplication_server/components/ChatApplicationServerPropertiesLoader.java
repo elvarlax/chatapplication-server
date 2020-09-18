@@ -70,7 +70,7 @@ public class ChatApplicationServerPropertiesLoader implements IComponent {
 
         /** The default value of the lotus-server.properties folder is "dist/chatapplication-server.properties" */
         String cwd = System.getProperty("user.dir");
-        configManager.setDefaultValue("PropertiesFile.Folder", cwd+"/chatapplication.properties");
+        configManager.setDefaultValue("PropertiesFile.Folder", cwd+"/dist/chatapplication.properties");
 
         /** Try to load the chatapplication-server.properties file */
         try {
