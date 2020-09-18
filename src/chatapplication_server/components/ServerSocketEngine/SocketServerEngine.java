@@ -12,10 +12,7 @@ import chatapplication_server.exception.ComponentInitException;
 import chatapplication_server.statistics.ServerStatistics;
 
 import java.net.ServerSocket;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLSocket;
 import java.util.*;
-import java.io.*;
 import java.net.*;
 import java.text.SimpleDateFormat;
 
@@ -41,12 +38,12 @@ public class SocketServerEngine extends GenericThreadedComponent {
     /**
      * Vector pool for keeping all the ConnectionHandlers in idle state waiting for new socket connections
      */
-    Vector connectionHandlingPool;
+    Vector<SocketConnectionHandler> connectionHandlingPool;
 
     /**
      * Vector holding the references to the connection handlers that are occupied by an established connection
      */
-    Vector connHandlerOccp;
+    Vector<SocketConnectionHandler> connHandlerOccp;
 
     /**
      * Singleton instance of the SocketServerEngine component
@@ -83,7 +80,7 @@ public class SocketServerEngine extends GenericThreadedComponent {
      */
     public void printEstablishedSocketInfo() {
         /** Vector that will temporarily hold a clone of the occupance pool... */
-        Vector occupance = new Vector();
+        Vector<SocketConnectionHandler> occupance = new Vector<SocketConnectionHandler>();
 
         /** Take a clone of the occupance pool in order not to block it for a long period of time and loose any new incomaing connections */
         synchronized (connHandlerOccp) {
@@ -99,7 +96,7 @@ public class SocketServerEngine extends GenericThreadedComponent {
         /** Then, for each connection handler that is occupied..print some information */
         for (int i = 0; i < occupance.size(); i++) {
             /** Get a Connection Handler reference... */
-            SocketConnectionHandler sch = (SocketConnectionHandler) occupance.get(i);
+            final SocketConnectionHandler sch = (SocketConnectionHandler) occupance.get(i);
 
             /** Print the information... */
             sch.printSocketInfo();
@@ -125,16 +122,16 @@ public class SocketServerEngine extends GenericThreadedComponent {
         lotusStat = new ServerStatistics();
 
         /** Initialize the vector holding information about the connection handlers... */
-        connectionHandlingPool = new Vector();
-        connHandlerOccp = new Vector();
+        connectionHandlingPool = new Vector<SocketConnectionHandler>();
+        connHandlerOccp = new Vector<SocketConnectionHandler>();
 
         /** Set the default value of the number of SSLConnectionHandlers waiting in the connectionHandling pool */
-        configManager.setDefaultValue("ConnectionHandlers.Number", new Integer(6).toString());
+        configManager.setDefaultValue("ConnectionHandlers.Number", Integer.toString(6));
 
         /** Start the connection handlers and add them in the pool... */
         SocketServerGUI.getInstance().appendEvent("[SSEngine]:: ConnectionHandling Pool (" + configManager.getValue("ConnectionHandlers.Number") + ") fired up (" + lotusStat.getCurrentDate() + ")\n");
         for (int i = 0; i < configManager.getValueInt("ConnectionHandlers.Number"); i++) {
-            SocketConnectionHandler handler = new SocketConnectionHandler();
+            final SocketConnectionHandler handler = new SocketConnectionHandler();
 
             /** Fire him up... */
             (new Thread(handler, "CH #" + i)).start();
@@ -154,7 +151,7 @@ public class SocketServerEngine extends GenericThreadedComponent {
 
             /** Indicate the start of the Socket Server Engine.... */
             isRunning = true;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             /** First print the exception to the current logging stream... */
             SocketServerGUI.getInstance().appendEvent("[SSEngine]:: Failed upon initialization of the CS socket server -- " + e.getMessage() + " (" + lotusStat.getCurrentDate() + ")\n");
 
@@ -168,7 +165,7 @@ public class SocketServerEngine extends GenericThreadedComponent {
 
     public ServerSocket getServer() throws Exception {
         /** The Socket used by the server */
-        ServerSocket s = new ServerSocket(configManager.getValueInt("Server.PortNumber"));
+        final ServerSocket s = new ServerSocket(configManager.getValueInt("Server.PortNumber"));
 
         return s;
     }
@@ -184,7 +181,7 @@ public class SocketServerEngine extends GenericThreadedComponent {
      *
      * @param sch The identification name of the Connection Handler that must be removed from the occupance pool
      */
-    public void removeConnHandlerOccp(String sch) {
+    public void removeConnHandlerOccp(final String sch) {
         /** A SocketConnectionHandler reference used for fetching already running handlers... */
         SocketConnectionHandler occupiedH = null;
 
@@ -208,7 +205,7 @@ public class SocketServerEngine extends GenericThreadedComponent {
      * This method is called by a connection handler that was assigned to a socket connection that finished its work
      * and want to go back to idle state and thus add itself to the pool for future work.
      */
-    public Vector getConnectionHandlingPool() {
+    public Vector<SocketConnectionHandler> getConnectionHandlingPool() {
         return connectionHandlingPool;
     }
 
@@ -222,9 +219,9 @@ public class SocketServerEngine extends GenericThreadedComponent {
      *
      * @param handlerName The String identifier of the Connectionhandler to be added in the pool
      */
-    public void addConnectionHandlerToPool(String handlerName) {
+    public void addConnectionHandlerToPool(final String handlerName) {
         /** Create a new Connection Handler... */
-        SocketConnectionHandler handler = new SocketConnectionHandler();
+        final SocketConnectionHandler handler = new SocketConnectionHandler();
 
         /** Fire him up... */
         (new Thread(handler, handlerName)).start();
@@ -279,25 +276,25 @@ public class SocketServerEngine extends GenericThreadedComponent {
                     }
                 }
             }
-        } catch (SocketException se) {
+        } catch (final SocketException se) {
             /** This kind of exception is thrown whenever the socket server is shutting down;so close the socket blocked */
             try {
                 /** First we have to check if any connection has been created... */
                 if (s != null)
                     s.close();
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 /** This exception is thrown whenever the blocked socket (waiting for new connections) could not be shut down... */
                 SocketServerGUI.getInstance().appendEvent("[SSEngine]:: Failed shutting down blocked socket connection --" + ex.getMessage() + " (" + lotusStat.getCurrentDate() + ")\n");
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             /** This exception is thrown whenever (for some reason) the incoming connection could not be established... */
             SocketServerGUI.getInstance().appendEvent("[SSEngine]:: Failed establishing Connection (" + s.getRemoteSocketAddress() + ") -- " + e.getMessage() + " (" + lotusStat.getCurrentDate() + ")\n");
         }
     }
 
-    public void writeMsgSpecificClient(int PortNo, String msg) {
+    public void writeMsgSpecificClient(final int PortNo, final String msg) {
         /** Vector that will temporarily hold a clone of the occupance pool... */
-        Vector occupance = new Vector();
+        Vector<SocketConnectionHandler> occupance = new Vector<SocketConnectionHandler>();
 
         /** Take a clone of the occupance pool in order not to block it for a long period of time and loose any new incomaing connections */
         synchronized (connHandlerOccp) {
@@ -313,7 +310,7 @@ public class SocketServerEngine extends GenericThreadedComponent {
         /** Then, for each connection handler that is occupied..print some information */
         for (int i = 0; i < occupance.size(); i++) {
             /** Get a Connection Handler reference... */
-            SocketConnectionHandler sch = (SocketConnectionHandler) occupance.get(i);
+            final SocketConnectionHandler sch = (SocketConnectionHandler) occupance.get(i);
 
             /** If this is the correct client... */
             if (sch.getHandleSocket().getPort() == PortNo)
@@ -326,18 +323,18 @@ public class SocketServerEngine extends GenericThreadedComponent {
      *
      * @param message The message to be broadcasted
      */
-    public void broadcast(String message) {
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+    public void broadcast(final String message) {
+        final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 
         // add HH:mm:ss and \n to the message
-        String time = sdf.format(new Date());
-        String messageLf = time + " " + message + "\n";
+        final String time = sdf.format(new Date());
+        final String messageLf = time + " " + message + "\n";
 
         /** Print the message on the Server GUI */
         SocketServerGUI.getInstance().appendRoom(messageLf);
 
         /** Vector that will temporarily hold a clone of the occupance pool... */
-        Vector occupance = new Vector();
+        Vector<SocketConnectionHandler> occupance = new Vector<SocketConnectionHandler>();
 
         /** Take a clone of the occupance pool in order not to block it for a long period of time and loose any new incomaing connections */
         synchronized (connHandlerOccp) {
@@ -353,7 +350,7 @@ public class SocketServerEngine extends GenericThreadedComponent {
         /** Then, for each connection handler that is occupied..print some information */
         for (int i = 0; i < occupance.size(); i++) {
             /** Get a Connection Handler reference... */
-            SocketConnectionHandler sch = (SocketConnectionHandler) occupance.get(i);
+            final SocketConnectionHandler sch = (SocketConnectionHandler) occupance.get(i);
 
             sch.writeMsg(messageLf);
         }
@@ -382,7 +379,7 @@ public class SocketServerEngine extends GenericThreadedComponent {
                 /** Print in the Event area of the Server Windows GUI the close operation of the Socket Server... */
                 SocketServerGUI.getInstance().appendEvent("[SSEngine]:: Shutting down the Socket Server....COMPLETE (" + lotusStat.getCurrentDate() + ")\n");
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             /** Print to the logging stream that shutting down the Central System socket server failed */
             SocketServerGUI.getInstance().appendEvent("[SSEngine]: Failed shutting down CS socket server -- " + e.getMessage() + " (" + lotusStat.getCurrentDate() + ")\n");
         }

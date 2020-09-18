@@ -4,7 +4,6 @@
  * and open the template in the editor.
  */
 package chatapplication_server.components.ClientSocketEngine;
-
 import SocketActionMessages.ChatMessage;
 import chatapplication_server.components.ConfigManager;
 
@@ -16,6 +15,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -34,6 +34,11 @@ import java.util.logging.Logger;
  * @author atgianne
  */
 public class P2PClient extends JFrame implements ActionListener {
+    /**
+     *
+     */
+    private static final long serialVersionUID = -8356039080334565759L;
+
     private final String host;
     private final String port;
     private final JTextField tfServer;
@@ -44,6 +49,7 @@ public class P2PClient extends JFrame implements ActionListener {
     private final JTextArea ta;
     protected boolean keepGoing;
     JButton send, start;
+
 
     P2PClient() {
         super("P2P Client Chat");

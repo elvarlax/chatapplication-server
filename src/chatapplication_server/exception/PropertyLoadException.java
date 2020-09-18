@@ -14,6 +14,11 @@ package chatapplication_server.exception;
  */
 public class PropertyLoadException extends Exception {
     /**
+     *
+     */
+    private static final long serialVersionUID = -1437395173201541622L;
+
+    /**
      * The message contained in the exception
      */
     String msg;
