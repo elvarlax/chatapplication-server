@@ -41,6 +41,7 @@
           <configuration>
             <appendAssemblyId>false</appendAssemblyId>
             <finalName>ChatApplication</finalName>
+            <outputDirectory>dist</outputDirectory>
             <archive>
               <manifest>
                 <mainClass>dtu.appliedcrypto.App</mainClass>

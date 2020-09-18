@@ -13,7 +13,7 @@ For build, you should install [Maven](https://maven.apache.org/guides/getting-st
 
 ## Build
 ```bash
-# this will build the project into ./target/ChatApplication.jar
+# this will build the project into ./dist/ChatApplication.jar
 $ mvn clean compile assembly:single
 ```
 
@@ -21,7 +21,7 @@ $ mvn clean compile assembly:single
 
 ```bash
 # to run as a client
-$ java -jar ./target/ChatApplication.jar Mode=Client
+$ java -jar ./dist/ChatApplication.jar Mode=Client
 # to run as a server
-$ java -jar ./target/ChatApplication.jar Mode=Server
+$ java -jar ./dist/ChatApplication.jar Mode=Server
 ```
