@@ -3,6 +3,8 @@ package chatapplication_server.crypto;
 import java.nio.charset.StandardCharsets;
 
 import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
+import java.security.MessageDigest;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
@@ -20,9 +22,17 @@ public class StreamCipher {
      */
     public StreamCipher(byte[] keyBytes) {
         if (keyBytes.length != 16 && keyBytes.length != 24 && keyBytes.length != 32) {
-            throw new IllegalArgumentException("keyBytes wrong length for AES key"); 
+            throw new IllegalArgumentException("keyBytes wrong length for AES key");
         }
         this.secret = new SecretKeySpec(keyBytes, "AES");
+    }
+
+    /**
+     * @param key
+     * @throws NoSuchAlgorithmException
+     */
+    public StreamCipher(String key) throws NoSuchAlgorithmException {
+        this(MessageDigest.getInstance("SHA256").digest(key.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**
