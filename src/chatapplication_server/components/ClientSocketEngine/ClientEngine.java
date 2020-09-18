@@ -61,6 +61,7 @@ public class ClientEngine extends GenericThreadedComponent {
      * Crypto library for encryption/decryption
      */
     private StreamCipher streamCipher;
+
     /**
      * Creates a new instance of SocketServerEngine
      */
@@ -104,10 +105,10 @@ public class ClientEngine extends GenericThreadedComponent {
         /**
          * Initialize a StreamCipher instance
          */
-        try{
+        try {
             /**
-            * Key from diffie hellman
-            */
+             * Key from diffie hellman
+             */
             String dhKey = "111111111";
             streamCipher = new StreamCipher(dhKey);
         } catch (Exception e) {
@@ -166,7 +167,7 @@ public class ClientEngine extends GenericThreadedComponent {
             System.out.println("Aloha");
             display("Exception writing to server: " + e);
         }
-        
+
     }
 
     /**
@@ -209,7 +210,8 @@ public class ClientEngine extends GenericThreadedComponent {
     public ObjectInputStream getStreamReader() {
         return socketReader;
     }
-    public StreamCipher getStreamCipher(){
+
+    public StreamCipher getStreamCipher() {
         return streamCipher;
     }
 

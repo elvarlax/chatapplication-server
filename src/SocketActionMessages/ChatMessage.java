@@ -16,7 +16,7 @@ import java.io.Serializable;
  * @author atgianne
  */
 public class ChatMessage implements Serializable {
-    protected static final long serialVersionUID = 1112122200L;
+    public static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2, PRIVATEMESSAGE = 3;
 
     // The different types of message sent by the Client
 
@@ -25,9 +25,7 @@ public class ChatMessage implements Serializable {
     // MESSAGE an ordinary message
 
     // LOGOUT to disconnect from the Server
-
-    public static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2, PRIVATEMESSAGE = 3;
-
+    protected static final long serialVersionUID = 1112122200L;
     private final int type;
 
     private final String message;

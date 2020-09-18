@@ -1,24 +1,22 @@
 package chatapplication_server.crypto;
 
-import java.nio.charset.StandardCharsets;
-
-import java.security.GeneralSecurityException;
-import java.security.NoSuchAlgorithmException;
-import java.security.MessageDigest;
-
-import javax.crypto.spec.SecretKeySpec;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.SecretKey;
-import javax.crypto.Cipher;
-
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class StreamCipher {
-    private SecretKey secret;
     public final static String CIPHER_TYPE = "AES/CBC/PKCS7Padding";
+    private final SecretKey secret;
 
     /**
-     * @param keyBytes some initial shared secret ("password") 
+     * @param keyBytes some initial shared secret ("password")
      */
     public StreamCipher(byte[] keyBytes) {
         if (keyBytes.length != 16 && keyBytes.length != 24 && keyBytes.length != 32) {
@@ -36,22 +34,24 @@ public class StreamCipher {
     }
 
     /**
-     * AES encrypt primitive (CBC mode with PKCS7 padding) 
-     * @param key some secret
+     * AES encrypt primitive (CBC mode with PKCS7 padding)
+     *
+     * @param key  some secret
      * @param data data to be encrypted
      * @return input vector and encrypted data as byte arrays
      * @throws GeneralSecurityException
      */
     private static byte[][] aesCbcEncrypt(SecretKey key, byte[] data) throws GeneralSecurityException {
-        Cipher cipher = Cipher.getInstance(CIPHER_TYPE, BouncyCastleProvider.PROVIDER_NAME); 
+        Cipher cipher = Cipher.getInstance(CIPHER_TYPE, BouncyCastleProvider.PROVIDER_NAME);
         cipher.init(Cipher.ENCRYPT_MODE, key);
-        return new byte[][] { cipher.getIV(), cipher.doFinal(data) };
+        return new byte[][]{cipher.getIV(), cipher.doFinal(data)};
     }
 
     /**
      * AES decrypt primitive (CBC mode with PKCS7 padding)
-     * @param key some secret
-     * @param iv input vector
+     *
+     * @param key        some secret
+     * @param iv         input vector
      * @param cipherText encrypted data
      * @return plainText data as byte array
      * @throws GeneralSecurityException
@@ -64,6 +64,7 @@ public class StreamCipher {
 
     /**
      * Stream Cipher encryption
+     *
      * @param message a message to be encrypted
      * @return input vector and encrypted message as byte arrays
      * @throws GeneralSecurityException
@@ -74,7 +75,8 @@ public class StreamCipher {
 
     /**
      * Stream Cipher decryption
-     * @param iv input vector
+     *
+     * @param iv         input vector
      * @param cipherText encrypted data
      * @return plain text
      * @throws GeneralSecurityException

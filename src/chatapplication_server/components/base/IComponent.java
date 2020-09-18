@@ -5,7 +5,8 @@
  */
 package chatapplication_server.components.base;
 
-import chatapplication_server.exception.*;
+import chatapplication_server.exception.ComponentInitException;
+import chatapplication_server.exception.PropertyLoadException;
 
 /**
  * This interface is supported by all ChatApplication components that support automatic start-up and

@@ -4,36 +4,25 @@
  * and open the template in the editor.
  */
 package chatapplication_server.components.ClientSocketEngine;
+
 import SocketActionMessages.ChatMessage;
 import SocketActionMessages.EncryptedChatMessage;
 import chatapplication_server.components.ConfigManager;
+import chatapplication_server.crypto.StreamCipher;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.GridLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
-
-import java.net.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import chatapplication_server.crypto.StreamCipher;
 
 /**
  * @author atgianne
@@ -46,8 +35,6 @@ public class P2PClient extends JFrame implements ActionListener {
 
     private final String host;
     private final String port;
-    private String dhKey = "111111111";
-    private StreamCipher streamCipher;
     private final JTextField tfServer;
     private final JTextField tfPort;
     private final JTextField tfsPort;
@@ -56,6 +43,8 @@ public class P2PClient extends JFrame implements ActionListener {
     private final JTextArea ta;
     protected boolean keepGoing;
     JButton send, start;
+    private final String dhKey = "111111111";
+    private StreamCipher streamCipher;
 
 
     P2PClient() {
@@ -165,12 +154,12 @@ public class P2PClient extends JFrame implements ActionListener {
             display("Exception creating new Input/output Streams: " + eIO);
             return false;
         }
-        if(dhKey==null){                         
+        if (dhKey == null) {
             //Key from diffie hellman
             String dhKey = "111111111";
 
             //Initialize a StreamCipher instance
-            try{
+            try {
                 streamCipher = new StreamCipher(dhKey);
             } catch (NoSuchAlgorithmException nae) {
                 display("Exception initializing nae: " + nae);
@@ -178,8 +167,8 @@ public class P2PClient extends JFrame implements ActionListener {
         }
 
         try {
-            ChatMessage cm = new ChatMessage(str.length(), str);   
-            EncryptedChatMessage ecm = new EncryptedChatMessage(cm, streamCipher);    
+            ChatMessage cm = new ChatMessage(str.length(), str);
+            EncryptedChatMessage ecm = new EncryptedChatMessage(cm, streamCipher);
             sOutput.writeObject(ecm);
             display("You: " + str);
             sOutput.close();
@@ -220,7 +209,7 @@ public class P2PClient extends JFrame implements ActionListener {
                     } catch (IOException eIO) {
                         display("Exception creating new Input/output Streams: " + eIO);
                     }
-                    if(dhKey==null){                         
+                    if (dhKey == null) {
                         //Key from diffie hellman
                         String dhKey = "111111111";
 
@@ -252,8 +241,7 @@ public class P2PClient extends JFrame implements ActionListener {
             catch (IOException e) {
 //            String msg = sdf.format(new Date()) + " Exception on new ServerSocket: " + e + "\n";
 //			display(msg);
-            }
-            catch(NoSuchAlgorithmException e) {
+            } catch (NoSuchAlgorithmException e) {
                 display("Exception establishing encryption: " + e);
             }
         }

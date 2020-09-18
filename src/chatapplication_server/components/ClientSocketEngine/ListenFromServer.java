@@ -6,13 +6,10 @@
 package chatapplication_server.components.ClientSocketEngine;
 
 import chatapplication_server.ComponentManager;
+import chatapplication_server.crypto.StreamCipher;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-
-import SocketActionMessages.ChatMessage;
-import SocketActionMessages.EncryptedChatMessage;
-import chatapplication_server.crypto.StreamCipher;
 
 
 /**

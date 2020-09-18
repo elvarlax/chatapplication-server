@@ -5,15 +5,11 @@
  */
 package chatapplication_server;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import java.io.IOException;
 import java.security.Security;
 import java.util.LinkedList;
-import java.math.BigInteger;
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-import chatapplication_server.crypto.DiffieHellman;
-import chatapplication_server.crypto.StreamCipher;
 
 /**
  * ChatApplicationServerEngine class is responsible for providing the appropriate interface in order for the system to correctly start up and
