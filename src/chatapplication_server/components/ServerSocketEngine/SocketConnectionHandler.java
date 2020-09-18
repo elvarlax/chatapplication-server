@@ -14,7 +14,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.io.StreamCorruptedException;
-import javax.net.ssl.SSLSocket;
 import java.net.*;
 import java.util.Vector;
 
@@ -399,7 +398,7 @@ public class SocketConnectionHandler implements Runnable {
         SocketServerGUI.getInstance().appendEvent("[" + handlerName + "]:: Finished SckHandling -- Back in the pool (" + connectionStat.getCurrentDate() + ")\n");
 
         /** Get the connectionHandling pool from the SSLEngineServer component to add ourselves */
-        Vector connectionPool = SocketServerEngine.getInstance().getConnectionHandlingPool();
+        Vector<SocketConnectionHandler> connectionPool = SocketServerEngine.getInstance().getConnectionHandlingPool();
 
         synchronized (connectionPool) {
             connectionPool.addElement(this);
