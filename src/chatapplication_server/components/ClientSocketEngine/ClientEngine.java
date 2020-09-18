@@ -6,6 +6,7 @@
 package chatapplication_server.components.ClientSocketEngine;
 
 import SocketActionMessages.ChatMessage;
+import SocketActionMessages.EncryptedChatMessage;
 import chatapplication_server.ComponentManager;
 import chatapplication_server.components.ConfigManager;
 import chatapplication_server.components.base.GenericThreadedComponent;
@@ -15,8 +16,12 @@ import chatapplication_server.statistics.ServerStatistics;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
+
+import chatapplication_server.crypto.StreamCipher;
 
 import java.net.*;
+import java.security.GeneralSecurityException;
 
 /**
  * @author atgianne
@@ -52,7 +57,10 @@ public class ClientEngine extends GenericThreadedComponent {
      * Singleton instance of the SocketServerEngine component
      */
     private static ClientEngine componentInstance = null;
-
+    /**
+     * Crypto library for encryption/decryption
+     */
+    private StreamCipher streamCipher;
     /**
      * Creates a new instance of SocketServerEngine
      */
@@ -90,6 +98,20 @@ public class ClientEngine extends GenericThreadedComponent {
             socket = new Socket(configManager.getValue("Server.Address"), configManager.getValueInt("Server.PortNumber"));
         } catch (Exception e) {
             display("Error connecting to the server:" + e.getMessage() + "\n");
+            ClientSocketGUI.getInstance().loginFailed();
+            return;
+        }
+        /**
+         * Initialize a StreamCipher instance
+         */
+        try{
+            /**
+            * Key from diffie hellman
+            */
+            String dhKey = "111111111";
+            streamCipher = new StreamCipher(dhKey);
+        } catch (Exception e) {
+            display("Error initializing the encryption:" + e.getMessage() + "\n");
             ClientSocketGUI.getInstance().loginFailed();
             return;
         }
@@ -138,11 +160,13 @@ public class ClientEngine extends GenericThreadedComponent {
      */
     public void sendMessage(ChatMessage msg) {
         try {
-            socketWriter.writeObject(msg);
-        } catch (IOException e) {
+            EncryptedChatMessage ecm = new EncryptedChatMessage(msg, streamCipher);
+            socketWriter.writeObject(ecm);
+        } catch (Exception e) {
             System.out.println("Aloha");
             display("Exception writing to server: " + e);
         }
+        
     }
 
     /**
@@ -184,6 +208,9 @@ public class ClientEngine extends GenericThreadedComponent {
 
     public ObjectInputStream getStreamReader() {
         return socketReader;
+    }
+    public StreamCipher getStreamCipher(){
+        return streamCipher;
     }
 
     /**

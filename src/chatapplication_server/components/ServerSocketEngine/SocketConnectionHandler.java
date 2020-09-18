@@ -6,8 +6,10 @@
 package chatapplication_server.components.ServerSocketEngine;
 
 import SocketActionMessages.ChatMessage;
+import SocketActionMessages.EncryptedChatMessage;
 import chatapplication_server.components.ConfigManager;
 import chatapplication_server.statistics.ServerStatistics;
+import chatapplication_server.crypto.StreamCipher;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -16,6 +18,8 @@ import java.io.OptionalDataException;
 import java.io.StreamCorruptedException;
 import javax.net.ssl.SSLSocket;
 import java.net.*;
+import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Vector;
 
 /**
@@ -67,7 +71,11 @@ public class SocketConnectionHandler implements Runnable {
      */
     private ObjectOutputStream socketWriter;
     private ObjectInputStream socketReader;
-
+    
+    /**
+     * Crypto library for encryption/decryption
+     */
+    private StreamCipher streamCipher;
     /**
      * Creates a new instance of SocketConnectionHandler
      */
@@ -154,9 +162,30 @@ public class SocketConnectionHandler implements Runnable {
             /** Read the username */
             userName = (String) socketReader.readObject();
             SocketServerGUI.getInstance().appendEvent(userName + " just connected at port number: " + handleConnection.getPort() + "\n");
+            /**
+            * Key from diffie hellman
+            */
+            String dhKey = "111111111";
 
+            streamCipher = new StreamCipher(dhKey);
             return true;
-        } catch (StreamCorruptedException sce) {
+        } 
+        catch (NoSuchAlgorithmException nae) {
+            /** Keep track of the exception in the logging stream... */
+            SocketServerGUI.getInstance().appendEvent("[" + handlerName + "]:: No such algorithm excp during stream reader/writer init -- " + nae.getMessage() + " (" + connectionStat.getCurrentDate() + ")\n");
+            
+            /** Notify the SocketServerEngine that we are about to die in order to create a new SSLConnectionHandler in our place */
+            SocketServerEngine.getInstance().addConnectionHandlerToPool(handlerName);
+
+            /** Notify the SocketServerEngine to remove us from the occupance pool... */
+            SocketServerEngine.getInstance().removeConnHandlerOccp(handlerName);
+            
+            /** Then shut down... */
+            this.stop();
+
+            return false;
+        } 
+        catch (StreamCorruptedException sce) {
             /** Keep track of the exception in the logging stream... */
             SocketServerGUI.getInstance().appendEvent("[" + handlerName + "]:: Stream corrupted excp during stream reader/writer init -- " + sce.getMessage() + " (" + connectionStat.getCurrentDate() + ")\n");
 
@@ -305,8 +334,11 @@ public class SocketConnectionHandler implements Runnable {
         while (isSocketOpen) {
             try {
                 /** Wait until there is something in the stream to be read... */
-                cm = (ChatMessage) socketReader.readObject();
-
+                EncryptedChatMessage ecm = (EncryptedChatMessage) socketReader.readObject();
+                int decrType = Integer.parseInt(streamCipher.decrypt(ecm.getEncryptedType()[0], ecm.getEncryptedType()[1]));
+                String decrMessage = streamCipher.decrypt(ecm.getEncryptedMessage()[0], ecm.getEncryptedMessage()[1]);
+                cm = new ChatMessage(decrType, decrMessage);
+                
                 String message = cm.getMessage();
 
                 // Switch on the type of message receive
@@ -337,7 +369,12 @@ public class SocketConnectionHandler implements Runnable {
                         break;
                 }
 
-            } catch (ClassNotFoundException cnfe) {
+            } catch (GeneralSecurityException gse){
+                /** Keep track of this exception in the logging stream... */
+                SocketServerGUI.getInstance().appendEvent(userName + " Exception reading streams:" + gse.getMessage() + "\n");
+                isSocketOpen = false;
+            }
+            catch (ClassNotFoundException cnfe) {
                 /** Keep track of this exception in the logging stream... */
                 SocketServerGUI.getInstance().appendEvent(userName + " Exception reading streams:" + cnfe.getMessage() + "\n");
                 isSocketOpen = false;
@@ -373,12 +410,18 @@ public class SocketConnectionHandler implements Runnable {
         }
         // write the message to the stream
         try {
+            byte[][] encrMessage = streamCipher.encrypt(msg);
+            socketWriter.writeObject(encrMessage);
             socketWriter.writeObject(msg);
         }
         // if an error occurs, do not abort just inform the user
         catch (IOException e) {
             SocketServerGUI.getInstance().appendEvent("Error sending message to " + userName + "\n");
             SocketServerGUI.getInstance().appendEvent(e.toString());
+        }
+        catch (GeneralSecurityException gse) {
+            SocketServerGUI.getInstance().appendEvent("Error encrypting the message to " + userName + "\n");
+            SocketServerGUI.getInstance().appendEvent(gse.toString());
         }
         return true;
     }

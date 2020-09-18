@@ -5,6 +5,7 @@
  */
 package chatapplication_server.components.ClientSocketEngine;
 import SocketActionMessages.ChatMessage;
+import SocketActionMessages.EncryptedChatMessage;
 import chatapplication_server.components.ConfigManager;
 
 import java.awt.BorderLayout;
@@ -27,8 +28,12 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import java.net.*;
+import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import chatapplication_server.crypto.StreamCipher;
 
 /**
  * @author atgianne
@@ -41,6 +46,8 @@ public class P2PClient extends JFrame implements ActionListener {
 
     private final String host;
     private final String port;
+    private String dhKey = "111111111";
+    private StreamCipher streamCipher;
     private final JTextField tfServer;
     private final JTextField tfPort;
     private final JTextField tfsPort;
@@ -158,14 +165,29 @@ public class P2PClient extends JFrame implements ActionListener {
             display("Exception creating new Input/output Streams: " + eIO);
             return false;
         }
+        if(dhKey==null){                         
+            //Key from diffie hellman
+            String dhKey = "111111111";
+
+            //Initialize a StreamCipher instance
+            try{
+                streamCipher = new StreamCipher(dhKey);
+            } catch (NoSuchAlgorithmException nae) {
+                display("Exception initializing nae: " + nae);
+            }
+        }
 
         try {
-            sOutput.writeObject(new ChatMessage(str.length(), str));
+            ChatMessage cm = new ChatMessage(str.length(), str);   
+            EncryptedChatMessage ecm = new EncryptedChatMessage(cm, streamCipher);    
+            sOutput.writeObject(ecm);
             display("You: " + str);
             sOutput.close();
             socket.close();
         } catch (IOException ex) {
             display("Exception creating new Input/output Streams: " + ex);
+        } catch (GeneralSecurityException gse) {
+            display("Exception encrypting the message: " + gse);
         }
 
         return true;
@@ -184,7 +206,6 @@ public class P2PClient extends JFrame implements ActionListener {
                 //display("Server is listening on port:"+tfsPort.getText());
                 ta.append("Server is listening on port:" + tfsPort.getText() + "\n");
                 ta.setCaretPosition(ta.getText().length() - 1);
-
                 // infinite loop to wait for connections
                 while (keepGoing) {
                     // format message saying we are waiting
@@ -199,9 +220,20 @@ public class P2PClient extends JFrame implements ActionListener {
                     } catch (IOException eIO) {
                         display("Exception creating new Input/output Streams: " + eIO);
                     }
+                    if(dhKey==null){                         
+                        //Key from diffie hellman
+                        String dhKey = "111111111";
+
+                        //Initialize a StreamCipher instance
+                        streamCipher = new StreamCipher(dhKey);
+                    }
 
                     try {
-                        String msg = ((ChatMessage) sInput.readObject()).getMessage();
+                        EncryptedChatMessage ecm = (EncryptedChatMessage) sInput.readObject();
+                        int decrType = Integer.parseInt(streamCipher.decrypt(ecm.getEncryptedType()[0], ecm.getEncryptedType()[1]));
+                        String decrMessage = streamCipher.decrypt(ecm.getEncryptedMessage()[0], ecm.getEncryptedMessage()[1]);
+                        ChatMessage cm = new ChatMessage(decrType, decrMessage);
+                        String msg = cm.getMessage();
                         System.out.println("Msg:" + msg);
                         display(socket.getInetAddress() + ": " + socket.getPort() + ": " + msg);
                         sInput.close();
@@ -210,6 +242,8 @@ public class P2PClient extends JFrame implements ActionListener {
                         display("Exception creating new Input/output Streams: " + ex);
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(P2PClient.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (GeneralSecurityException gse) {
+                        display("Exception decrypting the message: " + gse);
                     }
 
                 }
@@ -218,6 +252,9 @@ public class P2PClient extends JFrame implements ActionListener {
             catch (IOException e) {
 //            String msg = sdf.format(new Date()) + " Exception on new ServerSocket: " + e + "\n";
 //			display(msg);
+            }
+            catch(NoSuchAlgorithmException e) {
+                display("Exception establishing encryption: " + e);
             }
         }
     }

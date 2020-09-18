@@ -1,4 +1,4 @@
-package chatapplication_server.components;
+package chatapplication_server.crypto;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;

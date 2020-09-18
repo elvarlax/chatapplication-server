@@ -10,6 +10,11 @@ import chatapplication_server.ComponentManager;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
+import SocketActionMessages.ChatMessage;
+import SocketActionMessages.EncryptedChatMessage;
+import chatapplication_server.crypto.StreamCipher;
+
+
 /**
  * @author atgianne
  */
@@ -17,10 +22,18 @@ public class ListenFromServer extends Thread {
     public void run() {
         while (true) {
             ObjectInputStream sInput = ClientEngine.getInstance().getStreamReader();
+            StreamCipher streamCipher = ClientEngine.getInstance().getStreamCipher();
 
             synchronized (sInput) {
                 try {
-                    String msg = (String) sInput.readObject();
+                    byte[][] encrMessage = (byte[][]) sInput.readObject();
+                    String msg = "";
+                    try{
+                    msg = streamCipher.decrypt(encrMessage[0], encrMessage[1]);
+                    }
+                    catch(Exception e){
+                        System.out.println(e.toString());
+                    }
 
                     if (msg.contains("#")) {
                         ClientSocketGUI.getInstance().appendPrivateChat(msg + "\n");

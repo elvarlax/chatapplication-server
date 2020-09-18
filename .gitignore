@@ -87,3 +87,4 @@ build/
 
 # Ignore ChatApplicationServerPropertiesLoader
 src/chatapplication_server/componentsChatApplicationServerPropertiesLoader.java
+src/chatapplication_server/components/ChatApplicationServerPropertiesLoader.java.orig
