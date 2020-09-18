@@ -2,19 +2,27 @@
 
 Lab 1 - Establishing Secure Message Exchange
 
+This lab focuses on 2 tasks:
+- Applying Symmetric crypto during messaging
+- Diffie-Hellman key exchange in P2P communication
+
 ## Installation
 
+You should install java sdk (at least 11).
+For build, you should install [Maven](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html)
+
+## Build
 ```bash
-Add here how to setup!
+# this will build the project into:
+# ./target/chat-application-1.0-jar-with-dependencies.jar
+$ mvn clean compile assembly:single
 ```
 
-## build
+## Run
+
 ```bash
-javac -d ./build **/*.java && cd ./build && jar cvf ChatApp.jar *
-```
-
-## Usage
-
-```java
-Add here how to use program!
+# to run as a client
+$ java -jar ./target/chat-application-1.0-jar-with-dependencies.jar Mode=Client
+# to run as a server
+$ java -jar ./target/chat-application-1.0-jar-with-dependencies.jar Mode=Server
 ```
