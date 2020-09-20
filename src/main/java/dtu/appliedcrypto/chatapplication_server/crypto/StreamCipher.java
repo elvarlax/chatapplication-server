@@ -16,7 +16,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.Arrays;
 
 public class StreamCipher {
-    private SecretKey secret;
+    private final SecretKey secret;
     public final static int IV_LENGTH = 16;
     public final static String CIPHER_TYPE = "AES/CBC/PKCS7Padding";
 
