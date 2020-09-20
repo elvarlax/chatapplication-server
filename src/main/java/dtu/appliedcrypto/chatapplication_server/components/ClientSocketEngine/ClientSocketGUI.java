@@ -6,6 +6,7 @@
 package dtu.appliedcrypto.chatapplication_server.components.ClientSocketEngine;
 
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
+import dtu.appliedcrypto.SocketActionMessages.ChatMessageType;
 import dtu.appliedcrypto.chatapplication_server.ComponentManager;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.IComponent;
@@ -286,7 +287,7 @@ public class ClientSocketGUI extends JFrame implements IComponent, ActionListene
 
         /** If it is the logout operation... */
         if (o == logout) {
-            client.sendMessage(new ChatMessage(client.getId(), ChatMessage.LOGOUT));
+            client.sendMessage(new ChatMessage(client.getId(), ChatMessageType.LOGOUT));
 
             /** Disable the logout and other button */
             logout.setEnabled(false);
@@ -300,7 +301,7 @@ public class ClientSocketGUI extends JFrame implements IComponent, ActionListene
         }
         /** if it is the WHOISIN button... */
         if (o == whoIsIn) {
-            client.sendMessage(new ChatMessage(client.getId(), ChatMessage.WHOISIN));
+            client.sendMessage(new ChatMessage(client.getId(), ChatMessageType.WHO_IS_IN));
             return;
         }
         /** If this is for a private chat... */
@@ -316,7 +317,7 @@ public class ClientSocketGUI extends JFrame implements IComponent, ActionListene
                     + configManager.getValue("Client.Username") + "-#";
             System.out.println("2nd window : " + privateMsg);
 
-            client.sendMessage(new ChatMessage(client.getId(), ChatMessage.PRIVATEMESSAGE, privateMsg.getBytes()));
+            client.sendMessage(new ChatMessage(client.getId(), ChatMessageType.PRIVATE_MESSAGE, privateMsg.getBytes()));
 
             return;
         }

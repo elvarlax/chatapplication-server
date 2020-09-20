@@ -6,6 +6,7 @@
 package dtu.appliedcrypto.chatapplication_server.components.ClientSocketEngine;
 
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
+import dtu.appliedcrypto.SocketActionMessages.ChatMessageType;
 import dtu.appliedcrypto.chatapplication_server.ComponentManager;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.GenericThreadedComponent;
@@ -176,17 +177,17 @@ public class ClientEngine extends GenericThreadedComponent {
 
             // logout if message is LOGOUT
             if (msg.equalsIgnoreCase("LOGOUT")) {
-                sendMessage(new ChatMessage(id, ChatMessage.LOGOUT));
+                sendMessage(new ChatMessage(id, ChatMessageType.LOGOUT));
                 // break to do the disconnect
                 break;
             }
             // message WhoIsIn
             else if (msg.equalsIgnoreCase("WHOISIN")) {
-                sendMessage(new ChatMessage(id, ChatMessage.WHOISIN));
+                sendMessage(new ChatMessage(id, ChatMessageType.WHO_IS_IN));
             } else if (msg.equalsIgnoreCase("PRIVATEMESSAGE")) { // default to ordinary message
-                sendMessage(new ChatMessage(id, ChatMessage.PRIVATEMESSAGE, msg.getBytes()));
+                sendMessage(new ChatMessage(id, ChatMessageType.PRIVATE_MESSAGE, msg.getBytes()));
             } else { // default to ordinary message
-                sendMessage(new ChatMessage(id, ChatMessage.MESSAGE, msg.getBytes()));
+                sendMessage(new ChatMessage(id, ChatMessageType.MESSAGE, msg.getBytes()));
             }
         }
 

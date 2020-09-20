@@ -6,6 +6,7 @@
 package dtu.appliedcrypto.chatapplication_server.components.ClientSocketEngine;
 
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
+import dtu.appliedcrypto.SocketActionMessages.ChatMessageType;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 
 import java.awt.BorderLayout;
@@ -161,7 +162,7 @@ public class P2PClient extends JFrame implements ActionListener {
         }
 
         try {
-            sOutput.writeObject(new ChatMessage(id, ChatMessage.MESSAGE, str.getBytes()));
+            sOutput.writeObject(new ChatMessage(id, ChatMessageType.MESSAGE, str.getBytes()));
             display("You: " + str);
             sOutput.close();
             socket.close();

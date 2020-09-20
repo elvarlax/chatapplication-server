@@ -358,10 +358,10 @@ public class SocketConnectionHandler implements Runnable {
 
                 // Switch on the type of message receive
                 switch (cm.getType()) {
-                    case ChatMessage.MESSAGE:
+                    case MESSAGE:
                         SocketServerEngine.getInstance().broadcast(userName + ": " + message);
                         break;
-                    case ChatMessage.LOGOUT:
+                    case LOGOUT:
                         SocketServerGUI.getInstance().appendEvent(userName + " disconnected with a LOGOUT message.\n");
                         /**
                          * If we finished the 'handling' of the assigned socket connection, add
@@ -376,10 +376,10 @@ public class SocketConnectionHandler implements Runnable {
 
                         isSocketOpen = false;
                         break;
-                    case ChatMessage.WHOISIN:
+                    case WHO_IS_IN:
                         SocketServerEngine.getInstance().printEstablishedSocketInfo();
                         break;
-                    case ChatMessage.PRIVATEMESSAGE:
+                    case PRIVATE_MESSAGE:
                         String[] temp = new String(cm.getMessage()).split(",");
                         int PortNo = Integer.valueOf(temp[0]);
                         String Chat = temp[1];

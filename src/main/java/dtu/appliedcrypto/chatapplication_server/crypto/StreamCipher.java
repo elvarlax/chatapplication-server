@@ -71,7 +71,7 @@ public class StreamCipher {
      * Stream Cipher encryption
      * 
      * @param message a message to be encrypted
-     * @return input vector and encrypted message as byte arrays
+     * @return input vector and encrypted message as byte array
      * @throws GeneralSecurityException
      */
     public byte[] encrypt(String message) throws GeneralSecurityException {

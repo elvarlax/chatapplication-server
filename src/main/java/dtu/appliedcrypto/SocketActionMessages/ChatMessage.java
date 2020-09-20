@@ -26,10 +26,7 @@ public class ChatMessage implements Serializable {
 
     // LOGOUT to disconnect from the Server
 
-    public static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2, PRIVATEMESSAGE = 3, INIT_KEY_EXCHANGE = 4,
-            CONFIRM_KEY_EXCHANGE = 5;
-
-    private final int type;
+    private final ChatMessageType type;
 
     private final byte[] message;
 
@@ -42,13 +39,13 @@ public class ChatMessage implements Serializable {
      * @param type
      * @param message payload - encrypted/plaintext based on message type
      */
-    public ChatMessage(String id, int type, byte[] message) {
+    public ChatMessage(String id, ChatMessageType type, byte[] message) {
         this.type = type;
         this.id = id;
         this.message = message;
     }
 
-    public ChatMessage(String id, int type) {
+    public ChatMessage(String id, ChatMessageType type) {
         this.type = type;
         this.id = id;
         this.message = null;
@@ -60,7 +57,7 @@ public class ChatMessage implements Serializable {
         return id;
     }
 
-    public int getType() {
+    public ChatMessageType getType() {
         return type;
     }
 
