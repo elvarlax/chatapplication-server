@@ -11,10 +11,13 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.SecretKey;
 import javax.crypto.Cipher;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.util.Arrays;
 
 public class StreamCipher {
     private SecretKey secret;
+    public final static int IV_LENGTH = 16;
     public final static String CIPHER_TYPE = "AES/CBC/PKCS7Padding";
 
     /**
@@ -71,20 +74,21 @@ public class StreamCipher {
      * @return input vector and encrypted message as byte arrays
      * @throws GeneralSecurityException
      */
-    public byte[][] encrypt(String message) throws GeneralSecurityException {
-        return aesCbcEncrypt(this.secret, message.getBytes(StandardCharsets.UTF_8));
+    public byte[] encrypt(String message) throws GeneralSecurityException {
+        byte[][] result = aesCbcEncrypt(this.secret, message.getBytes(StandardCharsets.UTF_8));
+        return ArrayUtils.addAll(result[0], result[1]);
     }
 
     /**
-     * Stream Cipher decryption
+     * Stream cipher decryption
      * 
-     * @param iv         input vector
      * @param cipherText encrypted data
      * @return plain text
      * @throws GeneralSecurityException
      */
-    public String decrypt(byte[] iv, byte[] cipherText) throws GeneralSecurityException {
-        byte[] textBytes = aesCbcDecrypt(this.secret, iv, cipherText);
-        return new String(textBytes);
+    public String decrypt(byte[] cipherText) throws GeneralSecurityException {
+        byte[] charBytes = aesCbcDecrypt(this.secret, Arrays.copyOfRange(cipherText, 0, IV_LENGTH),
+                Arrays.copyOfRange(cipherText, IV_LENGTH, cipherText.length));
+        return new String(charBytes);
     }
 }
