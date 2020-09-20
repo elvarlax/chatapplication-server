@@ -286,7 +286,7 @@ public class ClientSocketGUI extends JFrame implements IComponent, ActionListene
 
         /** If it is the logout operation... */
         if (o == logout) {
-            client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
+            client.sendMessage(new ChatMessage(client.getId(), ChatMessage.LOGOUT));
 
             /** Disable the logout and other button */
             logout.setEnabled(false);
@@ -300,7 +300,7 @@ public class ClientSocketGUI extends JFrame implements IComponent, ActionListene
         }
         /** if it is the WHOISIN button... */
         if (o == whoIsIn) {
-            client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));
+            client.sendMessage(new ChatMessage(client.getId(), ChatMessage.WHOISIN));
             return;
         }
         /** If this is for a private chat... */
@@ -316,7 +316,7 @@ public class ClientSocketGUI extends JFrame implements IComponent, ActionListene
                     + configManager.getValue("Client.Username") + "-#";
             System.out.println("2nd window : " + privateMsg);
 
-            client.sendMessage(new ChatMessage(ChatMessage.PRIVATEMESSAGE, privateMsg));
+            client.sendMessage(new ChatMessage(client.getId(), ChatMessage.PRIVATEMESSAGE, privateMsg.getBytes()));
 
             return;
         }

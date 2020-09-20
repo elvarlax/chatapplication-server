@@ -354,7 +354,7 @@ public class SocketConnectionHandler implements Runnable {
                 /** Wait until there is something in the stream to be read... */
                 cm = (ChatMessage) socketReader.readObject();
 
-                String message = cm.getMessage();
+                String message = new String(cm.getMessage());
 
                 // Switch on the type of message receive
                 switch (cm.getType()) {
@@ -380,7 +380,7 @@ public class SocketConnectionHandler implements Runnable {
                         SocketServerEngine.getInstance().printEstablishedSocketInfo();
                         break;
                     case ChatMessage.PRIVATEMESSAGE:
-                        String[] temp = cm.getMessage().split(",");
+                        String[] temp = new String(cm.getMessage()).split(",");
                         int PortNo = Integer.valueOf(temp[0]);
                         String Chat = temp[1];
 

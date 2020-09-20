@@ -54,6 +54,12 @@ public class ClientEngine extends GenericThreadedComponent {
      */
     private static ClientEngine componentInstance = null;
 
+    private String id;
+
+    public String getId() {
+        return id;
+    }
+
     /**
      * Creates a new instance of SocketServerEngine
      */
@@ -91,6 +97,7 @@ public class ClientEngine extends GenericThreadedComponent {
         try {
             socket = new Socket(configManager.getValue("Server.Address"),
                     configManager.getValueInt("Server.PortNumber"));
+            id = socket.getInetAddress() + ":" + socket.getLocalPort();
         } catch (Exception e) {
             display("Error connecting to the server:" + e.getMessage() + "\n");
             ClientSocketGUI.getInstance().loginFailed();
@@ -169,17 +176,17 @@ public class ClientEngine extends GenericThreadedComponent {
 
             // logout if message is LOGOUT
             if (msg.equalsIgnoreCase("LOGOUT")) {
-                sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
+                sendMessage(new ChatMessage(id, ChatMessage.LOGOUT));
                 // break to do the disconnect
                 break;
             }
             // message WhoIsIn
             else if (msg.equalsIgnoreCase("WHOISIN")) {
-                sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));
+                sendMessage(new ChatMessage(id, ChatMessage.WHOISIN));
             } else if (msg.equalsIgnoreCase("PRIVATEMESSAGE")) { // default to ordinary message
-                sendMessage(new ChatMessage(ChatMessage.PRIVATEMESSAGE, msg));
+                sendMessage(new ChatMessage(id, ChatMessage.PRIVATEMESSAGE, msg.getBytes()));
             } else { // default to ordinary message
-                sendMessage(new ChatMessage(ChatMessage.MESSAGE, msg));
+                sendMessage(new ChatMessage(id, ChatMessage.MESSAGE, msg.getBytes()));
             }
         }
 

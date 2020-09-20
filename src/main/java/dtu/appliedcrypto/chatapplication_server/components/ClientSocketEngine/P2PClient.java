@@ -137,11 +137,13 @@ public class P2PClient extends JFrame implements ActionListener {
     }
 
     public boolean send(String str) {
+        String id;
         Socket socket;
         ObjectOutputStream sOutput; // to write on the socket
         // try to connect to the server
         try {
             socket = new Socket(tfServer.getText(), Integer.parseInt(tfPort.getText()));
+            id = socket.getInetAddress() + ":" + socket.getLocalPort();
         }
         // if it failed not much I can so
         catch (Exception ec) {
@@ -159,7 +161,7 @@ public class P2PClient extends JFrame implements ActionListener {
         }
 
         try {
-            sOutput.writeObject(new ChatMessage(str.length(), str));
+            sOutput.writeObject(new ChatMessage(id, ChatMessage.MESSAGE, str.getBytes()));
             display("You: " + str);
             sOutput.close();
             socket.close();
@@ -200,7 +202,7 @@ public class P2PClient extends JFrame implements ActionListener {
                     }
 
                     try {
-                        String msg = ((ChatMessage) sInput.readObject()).getMessage();
+                        String msg = new String(((ChatMessage) sInput.readObject()).getMessage());
                         System.out.println("Msg:" + msg);
                         display(socket.getInetAddress() + ": " + socket.getPort() + ": " + msg);
                         sInput.close();

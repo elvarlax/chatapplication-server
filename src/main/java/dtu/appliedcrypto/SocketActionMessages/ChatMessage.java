@@ -26,33 +26,45 @@ public class ChatMessage implements Serializable {
 
     // LOGOUT to disconnect from the Server
 
-    public static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2, PRIVATEMESSAGE = 3;
+    public static final int WHOISIN = 0, MESSAGE = 1, LOGOUT = 2, PRIVATEMESSAGE = 3, INIT_KEY_EXCHANGE = 4,
+            CONFIRM_KEY_EXCHANGE = 5;
 
     private final int type;
 
-    private final String message;
+    private final byte[] message;
 
-    // constructor
+    private final String id;
 
-    public ChatMessage(int type, String message) {
-
+    /**
+     * Payload exchanged between entities
+     * 
+     * @param id      originId - represents sender in form of IP:PORT
+     * @param type
+     * @param message payload - encrypted/plaintext based on message type
+     */
+    public ChatMessage(String id, int type, byte[] message) {
         this.type = type;
-
+        this.id = id;
         this.message = message;
+    }
 
+    public ChatMessage(String id, int type) {
+        this.type = type;
+        this.id = id;
+        this.message = null;
     }
 
     // getters
 
-    public int getType() {
-
-        return type;
-
+    public String getId() {
+        return id;
     }
 
-    public String getMessage() {
+    public int getType() {
+        return type;
+    }
 
+    public byte[] getMessage() {
         return message;
-
     }
 }
