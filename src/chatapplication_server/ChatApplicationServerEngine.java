@@ -155,7 +155,9 @@ public class ChatApplicationServerEngine {
     public static void main(String[] args) {
         String mode = getCommandLineArgPasswd(args);
 
-        System.out.println(args[0]);
+//        System.out.println(args[0]);
+
+        mode = "Client";
         System.out.println(mode);
 
         if (mode.equals("Server")) {

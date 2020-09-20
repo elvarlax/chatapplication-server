@@ -7,26 +7,19 @@ package chatapplication_server.components.ClientSocketEngine;
 
 import SocketActionMessages.ChatMessage;
 import chatapplication_server.components.ConfigManager;
+import chatapplication_server.crypto.DiffieHellman;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.GridLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
-
-import java.net.*;
+import java.math.BigInteger;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.security.GeneralSecurityException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,6 +36,12 @@ public class P2PClient extends JFrame implements ActionListener {
     private final JTextField tf;
     private final JTextArea ta;
     protected boolean keepGoing;
+    protected boolean keyExchangeFlag1;
+    protected boolean keyExchangeFlag2;
+    protected BigInteger K = null;
+    protected BigInteger partialKey;
+    protected BigInteger mySecret;
+    protected String firstMessage;
     JButton send, start;
 
     P2PClient() {
@@ -88,7 +87,7 @@ public class P2PClient extends JFrame implements ActionListener {
 
 //        ta2 = new JTextArea(80,80);
 //        ta2.setEditable(false);
-//        centerPanel.add(new JScrollPane(ta2));   
+//        centerPanel.add(new JScrollPane(ta2));
         add(centerPanel, BorderLayout.CENTER);
 
 
@@ -132,6 +131,59 @@ public class P2PClient extends JFrame implements ActionListener {
     }
 
     public boolean send(String str) {
+        // We save the first message in order to send it after the key exchange
+        firstMessage = str;
+        // if its the start of the communication, then we execute sendSharedKey
+        if (keyExchangeFlag1==true) {
+            sendSharedKey();
+        }
+
+        /// encryption will be implemented here, only when the user receives the msg
+        if (K != null) {
+            Socket socket;
+            ObjectOutputStream sOutput;        // to write on the socket
+            // try to connect to the server
+            try {
+                socket = new Socket(tfServer.getText(), Integer.parseInt(tfPort.getText()));
+            }
+            // if it failed not much I can so
+            catch (Exception ec) {
+                display("Error connectiong to server:" + ec.getMessage() + "\n");
+                return false;
+            }
+
+            /* Creating both Data Stream */
+            try {
+//			sInput  = new ObjectInputStream(socket.getInputStream());
+                sOutput = new ObjectOutputStream(socket.getOutputStream());
+            } catch (IOException eIO) {
+                display("Exception creating new Input/output Streams: " + eIO);
+                return false;
+            }
+
+            try {
+                sOutput.writeObject(new ChatMessage(str.length(), str));
+                display("You: " + str);
+                sOutput.close();
+                socket.close();
+            } catch (IOException ex) {
+                display("Exception creating new Input/output Streams: " + ex);
+            }
+        }
+        return true;
+    }
+
+    public boolean sendSharedKey(){
+
+        //Create random secret number
+        mySecret = DiffieHellman.generateRandomSecret();
+        //Create partial key
+        partialKey = DiffieHellman.getPartialKey(mySecret);
+
+        //And then we send it to the other client, the function belo is exactly the same
+        //as send, with the difference that we could not create another OutPut Stream at
+        //the same function with the message
+
         Socket socket;
         ObjectOutputStream sOutput;        // to write on the socket
         // try to connect to the server
@@ -153,16 +205,67 @@ public class P2PClient extends JFrame implements ActionListener {
             return false;
         }
 
+        // Send key
         try {
-            sOutput.writeObject(new ChatMessage(str.length(), str));
-            display("You: " + str);
-            sOutput.close();
-            socket.close();
+            sOutput.writeObject(new ChatMessage(partialKey.toString().length(), partialKey.toString()));
+            sOutput.reset();
         } catch (IOException ex) {
             display("Exception creating new Input/output Streams: " + ex);
         }
-
+        keyExchangeFlag1 = false;
+        keyExchangeFlag2= true;
         return true;
+
+    }
+
+    public boolean sendSharedKeyFinal(String msg){
+
+        mySecret = DiffieHellman.generateRandomSecret();
+        partialKey = DiffieHellman.getPartialKey(mySecret);
+        System.out.println("Bobs B : " + partialKey);
+        System.out.println("Bobs secret : " + mySecret);
+
+        // Bobs Keys
+        try {
+            byte [] key = DiffieHellman.getSharedKey(new BigInteger(msg), mySecret);
+            K = new BigInteger(key);
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        }
+        display("Shared Key " + K.toString());
+
+        Socket socket;
+        ObjectOutputStream sOutput;        // to write on the socket
+        // try to connect to the server
+        try {
+            socket = new Socket(tfServer.getText(), Integer.parseInt(tfPort.getText()));
+        }
+        // if it failed not much I can so
+        catch (Exception ec) {
+            display("Error connectiong to server:" + ec.getMessage() + "\n");
+            return false;
+        }
+
+        /* Creating both Data Stream */
+        try {
+//			sInput  = new ObjectInputStream(socket.getInputStream());
+            sOutput = new ObjectOutputStream(socket.getOutputStream());
+        } catch (IOException eIO) {
+            display("Exception creating new Input/output Streams: " + eIO);
+            return false;
+        }
+
+        // Send key
+        try {
+            sOutput.writeObject(new ChatMessage(partialKey.toString().length(), partialKey.toString()));
+            sOutput.reset();
+        } catch (IOException ex) {
+            display("Exception creating new Input/output Streams: " + ex);
+        }
+        keyExchangeFlag1 = false;
+        keyExchangeFlag2= false;
+        return true;
+
     }
 
     private class ListenFromClient extends Thread {
@@ -177,6 +280,10 @@ public class P2PClient extends JFrame implements ActionListener {
                 ServerSocket serverSocket = new ServerSocket(Integer.parseInt(tfsPort.getText()));
                 //display("Server is listening on port:"+tfsPort.getText());
                 ta.append("Server is listening on port:" + tfsPort.getText() + "\n");
+
+                //Set flags for handshake
+                keyExchangeFlag1 = true;
+                keyExchangeFlag2 = false;
                 ta.setCaretPosition(ta.getText().length() - 1);
 
                 // infinite loop to wait for connections
@@ -184,7 +291,6 @@ public class P2PClient extends JFrame implements ActionListener {
                     // format message saying we are waiting
 
                     Socket socket = serverSocket.accept();    // accept connection
-
                     ObjectInputStream sInput = null;        // to write on the socket
 
                     /* Creating both Data Stream */
@@ -197,9 +303,32 @@ public class P2PClient extends JFrame implements ActionListener {
                     try {
                         String msg = ((ChatMessage) sInput.readObject()).getMessage();
                         System.out.println("Msg:" + msg);
-                        display(socket.getInetAddress() + ": " + socket.getPort() + ": " + msg);
-                        sInput.close();
-                        socket.close();
+                        // Send the shared key back to the first person
+                        if(keyExchangeFlag1==true && keyExchangeFlag2 == false) {
+                            // Generate second key
+                            sendSharedKeyFinal(msg);
+                        }
+                        //receive the shared key and create the shared key - Final STEP
+                        else if (keyExchangeFlag1 == false && keyExchangeFlag2==true){
+                            try {
+                                byte [] key = DiffieHellman.getSharedKey(new BigInteger(msg), mySecret);
+                                K = new BigInteger(key);
+                            } catch (GeneralSecurityException e) {
+                                e.printStackTrace();
+                            }
+                            keyExchangeFlag2 = false;
+                            //I am Alice
+                            display("Shared Key " +K.toString());
+
+                            //This is to send the first message of the conversation AFTER the DH key exchange
+                            send(firstMessage);
+                        }
+                        else if (keyExchangeFlag1 == false && keyExchangeFlag2==false) {
+                            //decryption should be placed here
+                            display(socket.getInetAddress() + ": " + socket.getPort() + ": " + msg);
+                            sInput.close();
+                            socket.close();
+                        }
                     } catch (IOException ex) {
                         display("Exception creating new Input/output Streams: " + ex);
                     } catch (ClassNotFoundException ex) {
@@ -208,10 +337,7 @@ public class P2PClient extends JFrame implements ActionListener {
 
                 }
             }
-            // something went bad
             catch (IOException e) {
-//            String msg = sdf.format(new Date()) + " Exception on new ServerSocket: " + e + "\n";
-//			display(msg);
             }
         }
     }
