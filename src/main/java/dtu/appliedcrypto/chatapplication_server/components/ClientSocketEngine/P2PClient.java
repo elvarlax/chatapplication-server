@@ -8,6 +8,9 @@ package dtu.appliedcrypto.chatapplication_server.components.ClientSocketEngine;
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
 import dtu.appliedcrypto.SocketActionMessages.ChatMessageType;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
+import dtu.appliedcrypto.chatapplication_server.crypto.DHState;
+import dtu.appliedcrypto.chatapplication_server.crypto.DiffieHellman;
+import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipher;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -17,6 +20,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -29,6 +33,11 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import java.net.*;
+import java.security.GeneralSecurityException;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,8 +61,20 @@ public class P2PClient extends JFrame implements ActionListener {
     protected boolean keepGoing;
     JButton send, start;
 
+    private String id;
+    private final BigInteger secret;
+    private Map<String, DHState> dhStates;
+    private Map<String, StreamCipher> ciphers;
+    private Map<String, Queue<String>> messageQueue;
+
     P2PClient() {
         super("P2P Client Chat");
+
+        secret = DiffieHellman.generateRandomSecret();
+        ciphers = new HashMap<String, StreamCipher>();
+        dhStates = new HashMap<String, DHState>();
+        messageQueue = new HashMap<String, Queue<String>>();
+
         host = ConfigManager.getInstance().getValue("Server.Address");
         port = ConfigManager.getInstance().getValue("Server.PortNumber");
 
@@ -132,19 +153,32 @@ public class P2PClient extends JFrame implements ActionListener {
         }
     }
 
+    public String getId(Socket socket) {
+        return "localhost:" + socket.getPort();
+    }
+
+    public boolean isKeyEstablished(Socket socket) {
+        String destinationId = getId(socket);
+        // return ciphers.containsKey(destinationId);
+        if (!dhStates.containsKey(destinationId)) {
+            return false;
+        }
+        return dhStates.get(destinationId) == DHState.ESTABLISHED;
+    }
+
     public void display(String str) {
         ta.append(str + "\n");
         ta.setCaretPosition(ta.getText().length() - 1);
     }
 
     public boolean send(String str) {
-        String id;
         Socket socket;
+        String destinationId;
         ObjectOutputStream sOutput; // to write on the socket
         // try to connect to the server
         try {
             socket = new Socket(tfServer.getText(), Integer.parseInt(tfPort.getText()));
-            id = socket.getInetAddress() + ":" + socket.getLocalPort();
+            destinationId = getId(socket);
         }
         // if it failed not much I can so
         catch (Exception ec) {
@@ -162,12 +196,27 @@ public class P2PClient extends JFrame implements ActionListener {
         }
 
         try {
-            sOutput.writeObject(new ChatMessage(id, ChatMessageType.MESSAGE, str.getBytes()));
-            display("You: " + str);
+            if (!isKeyEstablished(socket)) {
+                if (!messageQueue.containsKey(destinationId)) {
+                    messageQueue.put(destinationId, new LinkedList<String>());
+                }
+                Queue<String> q = messageQueue.get(destinationId);
+                q.add(str);
+
+                sOutput.writeObject(new ChatMessage(id, ChatMessageType.INIT_KEY_EXCHANGE,
+                        DiffieHellman.getPartialKey(this.secret).toByteArray()));
+                dhStates.put(destinationId, DHState.INITIALIZED);
+            } else {
+                StreamCipher cipher = ciphers.get(destinationId);
+                sOutput.writeObject(new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipher.encrypt(str)));
+                display("You: " + str);
+            }
             sOutput.close();
             socket.close();
         } catch (IOException ex) {
             display("Exception creating new Input/output Streams: " + ex);
+        } catch (GeneralSecurityException ex) {
+            display("Encryption exception: " + ex);
         }
 
         return true;
@@ -185,6 +234,7 @@ public class P2PClient extends JFrame implements ActionListener {
                 ServerSocket serverSocket = new ServerSocket(Integer.parseInt(tfsPort.getText()));
                 // display("Server is listening on port:"+tfsPort.getText());
                 ta.append("Server is listening on port:" + tfsPort.getText() + "\n");
+                id = "localhost:" + tfsPort.getText();
                 ta.setCaretPosition(ta.getText().length() - 1);
 
                 // infinite loop to wait for connections
@@ -203,15 +253,93 @@ public class P2PClient extends JFrame implements ActionListener {
                     }
 
                     try {
-                        String msg = new String(((ChatMessage) sInput.readObject()).getMessage());
-                        System.out.println("Msg:" + msg);
-                        display(socket.getInetAddress() + ": " + socket.getPort() + ": " + msg);
+                        ChatMessage message = (ChatMessage) sInput.readObject();
+                        StreamCipher cipher;
+                        ObjectOutputStream sOutput;
+                        int index, port;
+                        String host;
+                        BigInteger A, B;
+                        byte[] K;
+                        switch (message.getType()) {
+                            case INIT_KEY_EXCHANGE:
+                                // Get recipient info
+                                index = message.getId().indexOf(":");
+                                host = message.getId().substring(0, index);
+                                port = Integer.parseInt(message.getId().substring(index + 1));
+
+                                // send him A
+                                A = DiffieHellman.getPartialKey(secret);
+
+                                sOutput = new ObjectOutputStream(new Socket(host, port).getOutputStream());
+
+                                sOutput.writeObject(
+                                        new ChatMessage(id, ChatMessageType.CONFIRM_KEY_EXCHANGE, A.toByteArray()));
+
+                                // establish Key
+                                B = new BigInteger(message.getMessage());
+                                K = DiffieHellman.getSharedKey(B, secret);
+                                cipher = new StreamCipher(K);
+
+                                ciphers.put(message.getId(), cipher);
+                                dhStates.put(message.getId(), DHState.ESTABLISHED);
+
+                                // send outstanding messages
+                                if (messageQueue.containsKey(message.getId())) {
+                                    Queue<String> q = messageQueue.get(message.getId());
+                                    while (!q.isEmpty()) {
+                                        String outMessage = q.poll();
+                                        byte[] cipherText = cipher.encrypt(outMessage);
+                                        sOutput.writeObject(
+                                                new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipherText));
+                                    }
+                                }
+                                sOutput.close();
+                                break;
+                            case CONFIRM_KEY_EXCHANGE:
+                                // Get recipient info
+                                index = message.getId().indexOf(":");
+                                host = message.getId().substring(0, index);
+                                port = Integer.parseInt(message.getId().substring(index + 1));
+
+                                // establish Key
+                                B = new BigInteger(message.getMessage());
+                                K = DiffieHellman.getSharedKey(B, secret);
+                                cipher = new StreamCipher(K);
+
+                                ciphers.put(message.getId(), cipher);
+                                dhStates.put(message.getId(), DHState.ESTABLISHED);
+
+                                // send outstanding messages
+                                sOutput = new ObjectOutputStream(new Socket(host, port).getOutputStream());
+                                if (messageQueue.containsKey(message.getId())) {
+                                    Queue<String> q = messageQueue.get(message.getId());
+                                    while (!q.isEmpty()) {
+                                        String outMessage = q.poll();
+                                        byte[] cipherText = cipher.encrypt(outMessage);
+                                        sOutput.writeObject(
+                                                new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipherText));
+                                    }
+                                }
+                                sOutput.close();
+                                break;
+                            case SECRET_MESSAGE:
+                                cipher = ciphers.get(message.getId());
+                                String plainText = cipher.decrypt(message.getMessage());
+                                System.out.println("Msg:" + plainText);
+                                display(socket.getInetAddress() + ":" + socket.getPort() + ": " + plainText);
+                        }
+
+                        // String msg = new String(((ChatMessage) sInput.readObject()).getMessage());
+                        // System.out.println("Msg:" + msg);
+                        // display(socket.getInetAddress() + ": " + socket.getPort() + ": " + msg);
                         sInput.close();
                         socket.close();
                     } catch (IOException ex) {
                         display("Exception creating new Input/output Streams: " + ex);
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(P2PClient.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (GeneralSecurityException ex) {
+                        display("Exception in crypto stuff");
                     }
 
                 }
