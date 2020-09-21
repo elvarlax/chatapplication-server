@@ -13,15 +13,16 @@ For build, you should install [Maven](https://maven.apache.org/guides/getting-st
 
 ## Build
 ```bash
-# this will build the project into ./dist/ChatApplication.jar
-$ mvn clean compile assembly:single
+# this will build the project into ./dist/chat-application.jar
+$ mvn clean package
 ```
+`Note: bouncy-castle is a signed package that must not be part of the final .jar file, therefore it's defined as external dependency (in lib folder)`
 
 ## Run
 
 ```bash
 # to run as a client
-$ java -jar ./dist/ChatApplication.jar Mode=Client
+$ java -jar ./dist/chat-application.jar Mode=Client
 # to run as a server
-$ java -jar ./dist/ChatApplication.jar Mode=Server
+$ java -jar ./dist/chat-application.jar Mode=Server
 ```
