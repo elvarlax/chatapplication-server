@@ -60,24 +60,13 @@ public class SocketServerEngine extends GenericThreadedComponent {
      */
     ServerSocket ChatApplication_Server;
 
-    private Map<String, StreamCipher> ciphers;
-    private Map<Integer, String> userNamePort;
-
-    public void mapUserNameToPort(String userName, int port) {
-        userNamePort.put(port, userName);
-    }
-
-    public String getUserNameByPort(int port) {
-        return userNamePort.get(port);
-    }
+    private final Map<String, StreamCipher> ciphers = new HashMap<String, StreamCipher>();
 
     /**
      * Creates a new instance of SocketServerEngine
      */
     public SocketServerEngine() {
         isRunning = false;
-        ciphers = new HashMap<String, StreamCipher>();
-        userNamePort = new HashMap<Integer, String>();
     }
 
     /**

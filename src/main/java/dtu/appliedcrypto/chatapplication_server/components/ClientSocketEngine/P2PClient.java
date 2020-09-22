@@ -193,7 +193,8 @@ public class P2PClient extends JFrame implements ActionListener {
                     dhStates.put(destinationId, DHState.INITIALIZED);
                 case INITIALIZED:
                     // enqueue the message for later
-                    addToBuffer(destinationId, str);
+                    Queue<String> buffer = getBuffer(destinationId);
+                    buffer.add(str);
                     break;
                 case ESTABLISHED:
                     StreamCipher cipher = ciphers.get(destinationId);
@@ -222,10 +223,6 @@ public class P2PClient extends JFrame implements ActionListener {
             messageBuffer.put(destinationId, new LinkedList<String>());
         }
         return messageBuffer.get(destinationId);
-    }
-
-    private void addToBuffer(String destinationId, String message) {
-        getBuffer(destinationId).add(message);
     }
 
     private class ListenFromClient extends Thread {
@@ -284,7 +281,8 @@ public class P2PClient extends JFrame implements ActionListener {
                                 dhStates.put(senderId, DHState.ESTABLISHED);
 
                                 // send outstanding messages
-                                sendBuffer(senderId, getBuffer(senderId));
+                                Queue<String> buffer = getBuffer(senderId);
+                                sendBuffer(senderId, buffer);
                                 break;
                             case SECRET_MESSAGE:
                                 StreamCipher cipher = ciphers.get(message.getId());

@@ -173,7 +173,6 @@ public class SocketConnectionHandler implements Runnable {
             /** Read the username */
             userName = (String) socketReader.readObject();
             int port = handleConnection.getPort();
-            SocketServerEngine.getInstance().mapUserNameToPort(userName, port);
             SocketServerGUI.getInstance().appendEvent(userName + " just connected at port number: " + port + "\n");
 
             return true;
