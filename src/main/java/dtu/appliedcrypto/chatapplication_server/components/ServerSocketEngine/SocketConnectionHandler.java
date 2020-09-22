@@ -8,6 +8,7 @@ package dtu.appliedcrypto.chatapplication_server.components.ServerSocketEngine;
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipher;
+import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipherUtility;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
 import java.io.IOException;
@@ -361,7 +362,7 @@ public class SocketConnectionHandler implements Runnable {
                 // Switch on the type of message receive
                 switch (cm.getType()) {
                     case MESSAGE:
-                        StreamCipher cipher = SocketServerEngine.getInstance().getCipher(cm.getId());
+                        StreamCipher cipher = StreamCipherUtility.getCipher(cm.getId());
                         message = cipher.decrypt(cm.getMessage());
                         SocketServerEngine.getInstance().broadcast(userName + ": " + message);
                         break;
@@ -443,7 +444,7 @@ public class SocketConnectionHandler implements Runnable {
         }
         // write the message to the stream
         try {
-            StreamCipher cipher = SocketServerEngine.getInstance().getCipher(getUserName());
+            StreamCipher cipher = StreamCipherUtility.getCipher(getUserName());
             byte[] cipherText = cipher.encrypt(msg);
             socketWriter.writeObject(cipherText);
         }

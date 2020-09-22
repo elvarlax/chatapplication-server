@@ -118,14 +118,10 @@ public class ClientEngine extends GenericThreadedComponent {
 
             /** Start the ListeFromServer thread... */
             id = configManager.getValue("Client.Username");
-            cipher = new StreamCipher(id);
-            new ListenFromServer(cipher).start();
+            new ListenFromServer(id).start();
         } catch (IOException ioe) {
             display("Exception creating new Input/Output Streams: " + ioe + "\n");
             ComponentManager.getInstance().fatalException(ioe);
-        } catch (GeneralSecurityException e) {
-            display("Exception initializing cipher: " + e);
-            ComponentManager.getInstance().fatalException(e);
         }
 
         /** Send our username to the server... */

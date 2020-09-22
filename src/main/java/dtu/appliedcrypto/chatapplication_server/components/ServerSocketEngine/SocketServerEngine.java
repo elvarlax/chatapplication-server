@@ -8,12 +8,10 @@ package dtu.appliedcrypto.chatapplication_server.components.ServerSocketEngine;
 import dtu.appliedcrypto.chatapplication_server.ComponentManager;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.GenericThreadedComponent;
-import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipher;
 import dtu.appliedcrypto.chatapplication_server.exception.ComponentInitException;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
 import java.net.ServerSocket;
-import java.security.GeneralSecurityException;
 import java.util.*;
 import java.net.*;
 import java.text.SimpleDateFormat;
@@ -60,8 +58,6 @@ public class SocketServerEngine extends GenericThreadedComponent {
      */
     ServerSocket ChatApplication_Server;
 
-    private final Map<String, StreamCipher> ciphers = new HashMap<String, StreamCipher>();
-
     /**
      * Creates a new instance of SocketServerEngine
      */
@@ -78,13 +74,6 @@ public class SocketServerEngine extends GenericThreadedComponent {
             componentInstance = new SocketServerEngine();
 
         return componentInstance;
-    }
-
-    public StreamCipher getCipher(String userName) throws GeneralSecurityException {
-        if (!ciphers.containsKey(userName)) {
-            ciphers.put(userName, new StreamCipher(userName));
-        }
-        return ciphers.get(userName);
     }
 
     /**
