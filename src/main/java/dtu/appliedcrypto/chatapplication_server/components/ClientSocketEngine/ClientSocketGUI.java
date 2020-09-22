@@ -179,9 +179,10 @@ public class ClientSocketGUI extends JFrame implements IComponent, ActionListene
         JTextField textUsername = new JTextField(20);
         textPortNo = new JTextField(20);
         SendButton = new JButton("Send");
+
         f = new JFrame(configManager.getValue("Client.Username"));
         f.setVisible(false);
-        f.getContentPane().setLayout(new GridBagLayout());
+        // f.getContentPane().setLayout(new GridBagLayout());
         Container contentPane = f.getContentPane();
         GridBagLayout layout = new GridBagLayout();
         contentPane.setLayout(layout);

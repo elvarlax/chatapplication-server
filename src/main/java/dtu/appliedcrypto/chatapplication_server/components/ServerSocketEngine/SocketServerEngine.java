@@ -8,10 +8,12 @@ package dtu.appliedcrypto.chatapplication_server.components.ServerSocketEngine;
 import dtu.appliedcrypto.chatapplication_server.ComponentManager;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.GenericThreadedComponent;
+import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipher;
 import dtu.appliedcrypto.chatapplication_server.exception.ComponentInitException;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
 import java.net.ServerSocket;
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.net.*;
 import java.text.SimpleDateFormat;
@@ -58,11 +60,24 @@ public class SocketServerEngine extends GenericThreadedComponent {
      */
     ServerSocket ChatApplication_Server;
 
+    private Map<String, StreamCipher> ciphers;
+    private Map<Integer, String> userNamePort;
+
+    public void mapUserNameToPort(String userName, int port) {
+        userNamePort.put(port, userName);
+    }
+
+    public String getUserNameByPort(int port) {
+        return userNamePort.get(port);
+    }
+
     /**
      * Creates a new instance of SocketServerEngine
      */
     public SocketServerEngine() {
         isRunning = false;
+        ciphers = new HashMap<String, StreamCipher>();
+        userNamePort = new HashMap<Integer, String>();
     }
 
     /**
@@ -74,6 +89,13 @@ public class SocketServerEngine extends GenericThreadedComponent {
             componentInstance = new SocketServerEngine();
 
         return componentInstance;
+    }
+
+    public StreamCipher getCipher(String userName) throws GeneralSecurityException {
+        if (!ciphers.containsKey(userName)) {
+            ciphers.put(userName, new StreamCipher(userName));
+        }
+        return ciphers.get(userName);
     }
 
     /**
@@ -378,8 +400,9 @@ public class SocketServerEngine extends GenericThreadedComponent {
             final SocketConnectionHandler sch = (SocketConnectionHandler) occupance.get(i);
 
             /** If this is the correct client... */
-            if (sch.getHandleSocket().getPort() == PortNo)
+            if (sch.getHandleSocket().getPort() == PortNo) {
                 sch.writeMsg(msg);
+            }
         }
     }
 
@@ -423,7 +446,6 @@ public class SocketServerEngine extends GenericThreadedComponent {
         for (int i = 0; i < occupance.size(); i++) {
             /** Get a Connection Handler reference... */
             final SocketConnectionHandler sch = (SocketConnectionHandler) occupance.get(i);
-
             sch.writeMsg(messageLf);
         }
     }

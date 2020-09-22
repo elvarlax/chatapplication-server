@@ -10,6 +10,7 @@ import dtu.appliedcrypto.SocketActionMessages.ChatMessageType;
 import dtu.appliedcrypto.chatapplication_server.ComponentManager;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.GenericThreadedComponent;
+import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipher;
 import dtu.appliedcrypto.chatapplication_server.exception.ComponentInitException;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
@@ -18,6 +19,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import java.net.*;
+import java.security.GeneralSecurityException;
 
 /**
  * @author atgianne
@@ -56,6 +58,7 @@ public class ClientEngine extends GenericThreadedComponent {
     private static ClientEngine componentInstance = null;
 
     private String id;
+    private StreamCipher cipher;
 
     public String getId() {
         return id;
@@ -98,7 +101,6 @@ public class ClientEngine extends GenericThreadedComponent {
         try {
             socket = new Socket(configManager.getValue("Server.Address"),
                     configManager.getValueInt("Server.PortNumber"));
-            id = socket.getInetAddress() + ":" + socket.getLocalPort();
         } catch (Exception e) {
             display("Error connecting to the server:" + e.getMessage() + "\n");
             ClientSocketGUI.getInstance().loginFailed();
@@ -115,10 +117,15 @@ public class ClientEngine extends GenericThreadedComponent {
             socketReader = new ObjectInputStream(socket.getInputStream());
 
             /** Start the ListeFromServer thread... */
-            new ListenFromServer().start();
+            id = configManager.getValue("Client.Username");
+            cipher = new StreamCipher(id);
+            new ListenFromServer(cipher).start();
         } catch (IOException ioe) {
             display("Exception creating new Input/Output Streams: " + ioe + "\n");
             ComponentManager.getInstance().fatalException(ioe);
+        } catch (GeneralSecurityException e) {
+            display("Exception initializing cipher: " + e);
+            ComponentManager.getInstance().fatalException(e);
         }
 
         /** Send our username to the server... */
@@ -175,19 +182,24 @@ public class ClientEngine extends GenericThreadedComponent {
             if (msg.equals(""))
                 continue;
 
-            // logout if message is LOGOUT
-            if (msg.equalsIgnoreCase("LOGOUT")) {
-                sendMessage(new ChatMessage(id, ChatMessageType.LOGOUT));
-                // break to do the disconnect
-                break;
-            }
-            // message WhoIsIn
-            else if (msg.equalsIgnoreCase("WHOISIN")) {
-                sendMessage(new ChatMessage(id, ChatMessageType.WHO_IS_IN));
-            } else if (msg.equalsIgnoreCase("PRIVATEMESSAGE")) { // default to ordinary message
-                sendMessage(new ChatMessage(id, ChatMessageType.PRIVATE_MESSAGE, msg.getBytes()));
-            } else { // default to ordinary message
-                sendMessage(new ChatMessage(id, ChatMessageType.MESSAGE, msg.getBytes()));
+            try {
+                // logout if message is LOGOUT
+                if (msg.equalsIgnoreCase("LOGOUT")) {
+                    sendMessage(new ChatMessage(id, ChatMessageType.LOGOUT));
+                    // break to do the disconnect
+                    break;
+                }
+                // message WhoIsIn
+                else if (msg.equalsIgnoreCase("WHOISIN")) {
+                    sendMessage(new ChatMessage(id, ChatMessageType.WHO_IS_IN));
+                } else if (msg.equalsIgnoreCase("PRIVATEMESSAGE")) { // default to ordinary message
+                    sendMessage(new ChatMessage(id, ChatMessageType.PRIVATE_MESSAGE, msg.getBytes()));
+                } else { // default to ordinary message
+                    byte[] cipherText = cipher.encrypt(msg);
+                    sendMessage(new ChatMessage(id, ChatMessageType.MESSAGE, cipherText));
+                }
+            } catch (GeneralSecurityException e) {
+                e.printStackTrace();
             }
         }
 

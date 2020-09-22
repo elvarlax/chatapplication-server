@@ -7,6 +7,7 @@ package dtu.appliedcrypto.chatapplication_server.components.ServerSocketEngine;
 
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
+import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipher;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.io.StreamCorruptedException;
 import java.net.*;
+import java.security.GeneralSecurityException;
 import java.util.Vector;
 
 /**
@@ -170,8 +172,9 @@ public class SocketConnectionHandler implements Runnable {
 
             /** Read the username */
             userName = (String) socketReader.readObject();
-            SocketServerGUI.getInstance()
-                    .appendEvent(userName + " just connected at port number: " + handleConnection.getPort() + "\n");
+            int port = handleConnection.getPort();
+            SocketServerEngine.getInstance().mapUserNameToPort(userName, port);
+            SocketServerGUI.getInstance().appendEvent(userName + " just connected at port number: " + port + "\n");
 
             return true;
         } catch (StreamCorruptedException sce) {
@@ -354,11 +357,13 @@ public class SocketConnectionHandler implements Runnable {
                 /** Wait until there is something in the stream to be read... */
                 cm = (ChatMessage) socketReader.readObject();
 
-                String message = new String(cm.getMessage());
-
+                // String message = new String(cm.getMessage());
+                String message;
                 // Switch on the type of message receive
                 switch (cm.getType()) {
                     case MESSAGE:
+                        StreamCipher cipher = SocketServerEngine.getInstance().getCipher(cm.getId());
+                        message = cipher.decrypt(cm.getMessage());
                         SocketServerEngine.getInstance().broadcast(userName + ": " + message);
                         break;
                     case LOGOUT:
@@ -408,6 +413,10 @@ public class SocketConnectionHandler implements Runnable {
 
                 /** Change the socket status... */
                 isSocketOpen = false;
+            } catch (GeneralSecurityException e) {
+                SocketServerGUI.getInstance()
+                        .appendEvent(userName + " Exception encrypting/decrypting:" + e.getMessage() + "\n");
+                e.printStackTrace();
             }
         }
     }
@@ -435,12 +444,16 @@ public class SocketConnectionHandler implements Runnable {
         }
         // write the message to the stream
         try {
-            socketWriter.writeObject(msg);
+            StreamCipher cipher = SocketServerEngine.getInstance().getCipher(getUserName());
+            byte[] cipherText = cipher.encrypt(msg);
+            socketWriter.writeObject(cipherText);
         }
         // if an error occurs, do not abort just inform the user
         catch (IOException e) {
             SocketServerGUI.getInstance().appendEvent("Error sending message to " + userName + "\n");
             SocketServerGUI.getInstance().appendEvent(e.toString());
+        } catch (GeneralSecurityException e) {
+            SocketServerGUI.getInstance().appendEvent("Error encrypting message to " + userName + "\n");
         }
         return true;
     }
