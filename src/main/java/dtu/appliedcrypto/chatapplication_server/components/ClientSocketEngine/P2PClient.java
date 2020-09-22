@@ -65,7 +65,7 @@ public class P2PClient extends JFrame implements ActionListener {
     private final BigInteger secret;
     private Map<String, DHState> dhStates;
     private Map<String, StreamCipher> ciphers;
-    private Map<String, Queue<String>> messageQueue;
+    private Map<String, Queue<String>> messageBuffer;
 
     P2PClient() {
         super("P2P Client Chat");
@@ -73,7 +73,7 @@ public class P2PClient extends JFrame implements ActionListener {
         secret = DiffieHellman.generateRandomSecret();
         ciphers = new HashMap<String, StreamCipher>();
         dhStates = new HashMap<String, DHState>();
-        messageQueue = new HashMap<String, Queue<String>>();
+        messageBuffer = new HashMap<String, Queue<String>>();
 
         host = ConfigManager.getInstance().getValue("Server.Address");
         port = ConfigManager.getInstance().getValue("Server.PortNumber");
@@ -153,19 +153,6 @@ public class P2PClient extends JFrame implements ActionListener {
         }
     }
 
-    public String getId(Socket socket) {
-        return "localhost:" + socket.getPort();
-    }
-
-    public boolean isKeyEstablished(Socket socket) {
-        String destinationId = getId(socket);
-        // return ciphers.containsKey(destinationId);
-        if (!dhStates.containsKey(destinationId)) {
-            return false;
-        }
-        return dhStates.get(destinationId) == DHState.ESTABLISHED;
-    }
-
     public void display(String str) {
         ta.append(str + "\n");
         ta.setCaretPosition(ta.getText().length() - 1);
@@ -174,6 +161,7 @@ public class P2PClient extends JFrame implements ActionListener {
     public boolean send(String str) {
         Socket socket;
         String destinationId;
+        ChatMessage payload;
         ObjectOutputStream sOutput; // to write on the socket
         // try to connect to the server
         try {
@@ -196,20 +184,23 @@ public class P2PClient extends JFrame implements ActionListener {
         }
 
         try {
-            if (!isKeyEstablished(socket)) {
-                if (!messageQueue.containsKey(destinationId)) {
-                    messageQueue.put(destinationId, new LinkedList<String>());
-                }
-                Queue<String> q = messageQueue.get(destinationId);
-                q.add(str);
-
-                sOutput.writeObject(new ChatMessage(id, ChatMessageType.INIT_KEY_EXCHANGE,
-                        DiffieHellman.getPartialKey(this.secret).toByteArray()));
-                dhStates.put(destinationId, DHState.INITIALIZED);
-            } else {
-                StreamCipher cipher = ciphers.get(destinationId);
-                sOutput.writeObject(new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipher.encrypt(str)));
-                display("You: " + str);
+            switch (dhStates.getOrDefault(destinationId, DHState.NOT_INITIALIZED)) {
+                case NOT_INITIALIZED:
+                    // initialize DH key exchange
+                    byte[] A = DiffieHellman.getPartialKey(this.secret).toByteArray();
+                    payload = new ChatMessage(id, ChatMessageType.INIT_KEY_EXCHANGE, A);
+                    sOutput.writeObject(payload);
+                    dhStates.put(destinationId, DHState.INITIALIZED);
+                case INITIALIZED:
+                    // enqueue the message for later
+                    addToBuffer(destinationId, str);
+                    break;
+                case ESTABLISHED:
+                    StreamCipher cipher = ciphers.get(destinationId);
+                    payload = new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipher.encrypt(str));
+                    sOutput.writeObject(payload);
+                    display("You: " + str);
+                    break;
             }
             sOutput.close();
             socket.close();
@@ -220,6 +211,21 @@ public class P2PClient extends JFrame implements ActionListener {
         }
 
         return true;
+    }
+
+    private String getId(Socket socket) {
+        return "localhost:" + socket.getPort();
+    }
+
+    private Queue<String> getBuffer(String destinationId) {
+        if (!messageBuffer.containsKey(destinationId)) {
+            messageBuffer.put(destinationId, new LinkedList<String>());
+        }
+        return messageBuffer.get(destinationId);
+    }
+
+    private void addToBuffer(String destinationId, String message) {
+        getBuffer(destinationId).add(message);
     }
 
     private class ListenFromClient extends Thread {
@@ -254,76 +260,34 @@ public class P2PClient extends JFrame implements ActionListener {
 
                     try {
                         ChatMessage message = (ChatMessage) sInput.readObject();
-                        StreamCipher cipher;
-                        ObjectOutputStream sOutput;
-                        int index, port;
-                        String host, plainText;
-                        BigInteger A, B;
-                        byte[] K;
+                        String senderId, plainText;
+
                         switch (message.getType()) {
                             case INIT_KEY_EXCHANGE:
-                                // Get recipient info
-                                index = message.getId().indexOf(":");
-                                host = message.getId().substring(0, index);
-                                port = Integer.parseInt(message.getId().substring(index + 1));
+                                // get sender id
+                                senderId = message.getId();
 
                                 // send him A
-                                A = DiffieHellman.getPartialKey(secret);
+                                byte[] A = DiffieHellman.getPartialKey(secret).toByteArray();
+                                ChatMessage payload = new ChatMessage(id, ChatMessageType.CONFIRM_KEY_EXCHANGE, A);
+                                send(senderId, payload);
+                                dhStates.put(senderId, DHState.INITIALIZED);
 
-                                sOutput = new ObjectOutputStream(new Socket(host, port).getOutputStream());
-
-                                sOutput.writeObject(
-                                        new ChatMessage(id, ChatMessageType.CONFIRM_KEY_EXCHANGE, A.toByteArray()));
-
-                                // establish Key
-                                B = new BigInteger(message.getMessage());
-                                K = DiffieHellman.getSharedKey(B, secret);
-                                cipher = new StreamCipher(K);
-
-                                ciphers.put(message.getId(), cipher);
-                                dhStates.put(message.getId(), DHState.ESTABLISHED);
-
-                                // send outstanding messages
-                                if (messageQueue.containsKey(message.getId())) {
-                                    Queue<String> q = messageQueue.get(message.getId());
-                                    while (!q.isEmpty()) {
-                                        String outMessage = q.poll();
-                                        byte[] cipherText = cipher.encrypt(outMessage);
-                                        sOutput.writeObject(
-                                                new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipherText));
-                                    }
-                                }
-                                sOutput.close();
-                                break;
                             case CONFIRM_KEY_EXCHANGE:
-                                // Get recipient info
-                                index = message.getId().indexOf(":");
-                                host = message.getId().substring(0, index);
-                                port = Integer.parseInt(message.getId().substring(index + 1));
+                                // get sender id
+                                senderId = message.getId();
 
                                 // establish Key
-                                B = new BigInteger(message.getMessage());
-                                K = DiffieHellman.getSharedKey(B, secret);
-                                cipher = new StreamCipher(K);
-
-                                ciphers.put(message.getId(), cipher);
-                                dhStates.put(message.getId(), DHState.ESTABLISHED);
+                                BigInteger B = new BigInteger(message.getMessage());
+                                byte[] K = DiffieHellman.getSharedKey(B, secret);
+                                ciphers.put(senderId, new StreamCipher(K));
+                                dhStates.put(senderId, DHState.ESTABLISHED);
 
                                 // send outstanding messages
-                                sOutput = new ObjectOutputStream(new Socket(host, port).getOutputStream());
-                                if (messageQueue.containsKey(message.getId())) {
-                                    Queue<String> q = messageQueue.get(message.getId());
-                                    while (!q.isEmpty()) {
-                                        String outMessage = q.poll();
-                                        byte[] cipherText = cipher.encrypt(outMessage);
-                                        sOutput.writeObject(
-                                                new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipherText));
-                                    }
-                                }
-                                sOutput.close();
+                                sendBuffer(senderId, getBuffer(senderId));
                                 break;
                             case SECRET_MESSAGE:
-                                cipher = ciphers.get(message.getId());
+                                StreamCipher cipher = ciphers.get(message.getId());
                                 plainText = cipher.decrypt(message.getMessage());
                                 System.out.println("Msg:" + plainText);
                                 display(socket.getInetAddress() + ":" + socket.getPort() + ": " + plainText);
@@ -333,10 +297,6 @@ public class P2PClient extends JFrame implements ActionListener {
                                 System.out.println("Msg:" + plainText);
                                 display(socket.getInetAddress() + ":" + socket.getPort() + ": " + plainText);
                         }
-
-                        // String msg = new String(((ChatMessage) sInput.readObject()).getMessage());
-                        // System.out.println("Msg:" + msg);
-                        // display(socket.getInetAddress() + ": " + socket.getPort() + ": " + msg);
                         sInput.close();
                         socket.close();
                     } catch (IOException ex) {
@@ -344,7 +304,8 @@ public class P2PClient extends JFrame implements ActionListener {
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(P2PClient.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (GeneralSecurityException ex) {
-                        display("Exception in crypto stuff");
+                        Logger.getLogger(P2PClient.class.getName()).log(Level.SEVERE, null, ex);
+                        display("Exception ecrypting/decrypting: " + ex);
                     }
 
                 }
@@ -355,6 +316,47 @@ public class P2PClient extends JFrame implements ActionListener {
                 // + "\n";
                 // display(msg);
             }
+        }
+
+        private String getSenderIP(String destination) {
+            int index = destination.indexOf(":");
+            String host = destination.substring(0, index);
+            return host;
+        }
+
+        private int getSenderPort(String destination) {
+            int index = destination.indexOf(":");
+            int port = Integer.parseInt(destination.substring(index + 1));
+            return port;
+        }
+
+        private void send(String destination, ChatMessage message) throws IOException {
+            Socket socket = new Socket(getSenderIP(destination), getSenderPort(destination));
+            ObjectOutputStream sOutput = new ObjectOutputStream(socket.getOutputStream());
+            sOutput.writeObject(message);
+            sOutput.close();
+            socket.close();
+        }
+
+        private void sendBuffer(String destination, Queue<String> buffer) throws IOException, GeneralSecurityException {
+            if (buffer.isEmpty()) {
+                return;
+            }
+
+            Socket socket = new Socket(getSenderIP(destination), getSenderPort(destination));
+            ObjectOutputStream sOutput = new ObjectOutputStream(socket.getOutputStream());
+            StreamCipher cipher = ciphers.get(destination);
+
+            while (!buffer.isEmpty()) {
+                String outMessage = buffer.poll();
+                byte[] cipherText = cipher.encrypt(outMessage);
+                ChatMessage payload = new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipherText);
+                sOutput.writeObject(payload);
+                display("You: " + outMessage);
+            }
+
+            sOutput.close();
+            socket.close();
         }
     }
 }
