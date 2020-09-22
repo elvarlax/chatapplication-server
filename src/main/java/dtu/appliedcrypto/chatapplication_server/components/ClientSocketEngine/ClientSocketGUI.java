@@ -70,7 +70,7 @@ public class ClientSocketGUI extends JFrame implements IComponent, ActionListene
     /**
      * whoIsIn refers to online users
      */
-    private JButton login, logout, whoIsIn, PrivateChat, PublicChat, SendButton, p2pClient;
+    private JButton login, logout, whoIsIn, PrivateChat, /* PublicChat, */ SendButton, p2pClient;
 
     /**
      * for the chat room

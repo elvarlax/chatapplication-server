@@ -387,6 +387,8 @@ public class SocketConnectionHandler implements Runnable {
                         System.out.println("At Server :  " + PortNo + temp[1]);
                         SocketServerEngine.getInstance().writeMsgSpecificClient(PortNo, Chat);
                         break;
+                    default:
+                        System.out.println("Unexpected message type received: " + cm.getType());
                 }
 
             } catch (ClassNotFoundException cnfe) {

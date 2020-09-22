@@ -257,7 +257,7 @@ public class P2PClient extends JFrame implements ActionListener {
                         StreamCipher cipher;
                         ObjectOutputStream sOutput;
                         int index, port;
-                        String host;
+                        String host, plainText;
                         BigInteger A, B;
                         byte[] K;
                         switch (message.getType()) {
@@ -324,7 +324,12 @@ public class P2PClient extends JFrame implements ActionListener {
                                 break;
                             case SECRET_MESSAGE:
                                 cipher = ciphers.get(message.getId());
-                                String plainText = cipher.decrypt(message.getMessage());
+                                plainText = cipher.decrypt(message.getMessage());
+                                System.out.println("Msg:" + plainText);
+                                display(socket.getInetAddress() + ":" + socket.getPort() + ": " + plainText);
+                                break;
+                            default:
+                                plainText = new String(message.getMessage());
                                 System.out.println("Msg:" + plainText);
                                 display(socket.getInetAddress() + ":" + socket.getPort() + ": " + plainText);
                         }

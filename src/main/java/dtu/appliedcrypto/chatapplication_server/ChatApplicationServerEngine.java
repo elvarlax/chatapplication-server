@@ -144,7 +144,7 @@ public class ChatApplicationServerEngine {
     public static String getCommandLineArgPasswd(String[] args) {
         /** Auxiliary objects... */
         int delimPos;
-        String key, value;
+        String value;
 
         /** Get the passwords from the command line arguments... */
         for (int i = 0; i < args.length; i++) {
@@ -157,7 +157,7 @@ public class ChatApplicationServerEngine {
 
             /** Check the case of the 'KeyStore.Password' key...Ignore upper case */
             if (args[i].substring(0, delimPos).toLowerCase().equals("mode")) {
-                key = args[i].substring(0, delimPos).toLowerCase();
+                // String key = args[i].substring(0, delimPos).toLowerCase();
                 value = args[i].substring(delimPos + 1);
                 return value;
             }
