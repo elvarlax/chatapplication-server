@@ -62,7 +62,7 @@ public class DiffieHellman {
     }
 
     /**
-     * Computs a partial key K such that K = | g^(secret) | mod p
+     * Computes a partial key K such that K = | g^(secret) | mod p
      * 
      * @param secret own secret key
      * @return a partial key

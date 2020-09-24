@@ -192,7 +192,7 @@ public class ClientEngine extends GenericThreadedComponent {
                     sendMessage(new ChatMessage(id, ChatMessageType.PRIVATE_MESSAGE, msg.getBytes()));
                 } else { // default to ordinary message
                     byte[] cipherText = cipher.encrypt(msg);
-                    sendMessage(new ChatMessage(id, ChatMessageType.MESSAGE, cipherText));
+                    sendMessage(new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipherText));
                 }
             } catch (GeneralSecurityException e) {
                 e.printStackTrace();

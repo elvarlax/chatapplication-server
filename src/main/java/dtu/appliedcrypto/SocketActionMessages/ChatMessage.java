@@ -35,7 +35,7 @@ public class ChatMessage implements Serializable {
     /**
      * Payload exchanged between entities
      * 
-     * @param id      originId - represents sender in form of IP:PORT
+     * @param id      originId - represents sender in form of IP:PORT or userName
      * @param type
      * @param message payload - encrypted/plaintext based on message type
      */

@@ -356,13 +356,13 @@ public class SocketConnectionHandler implements Runnable {
             try {
                 /** Wait until there is something in the stream to be read... */
                 cm = (ChatMessage) socketReader.readObject();
-
-                // String message = new String(cm.getMessage());
+                StreamCipher cipher;
                 String message;
+
                 // Switch on the type of message receive
                 switch (cm.getType()) {
-                    case MESSAGE:
-                        StreamCipher cipher = StreamCipherUtility.getCipher(cm.getId());
+                    case SECRET_MESSAGE:
+                        cipher = StreamCipherUtility.getCipher(cm.getId());
                         message = cipher.decrypt(cm.getMessage());
                         SocketServerEngine.getInstance().broadcast(userName + ": " + message);
                         break;
@@ -385,7 +385,9 @@ public class SocketConnectionHandler implements Runnable {
                         SocketServerEngine.getInstance().printEstablishedSocketInfo();
                         break;
                     case PRIVATE_MESSAGE:
-                        String[] temp = new String(cm.getMessage()).split(",");
+                        cipher = StreamCipherUtility.getCipher(cm.getId());
+                        message = cipher.decrypt(cm.getMessage());
+                        String[] temp = message.split(",");
                         int PortNo = Integer.valueOf(temp[0]);
                         String Chat = temp[1];
 
