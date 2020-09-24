@@ -10,7 +10,7 @@ import dtu.appliedcrypto.SocketActionMessages.ChatMessageType;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.crypto.DHState;
 import dtu.appliedcrypto.chatapplication_server.crypto.DiffieHellman;
-import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipher;
+import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -64,14 +64,14 @@ public class P2PClient extends JFrame implements ActionListener {
     private String id;
     private final BigInteger secret;
     private Map<String, DHState> dhStates;
-    private Map<String, StreamCipher> ciphers;
+    private Map<String, SymmetricCipher> ciphers;
     private Map<String, Queue<String>> messageBuffer;
 
     P2PClient() {
         super("P2P Client Chat");
 
         secret = DiffieHellman.generateRandomSecret();
-        ciphers = new HashMap<String, StreamCipher>();
+        ciphers = new HashMap<String, SymmetricCipher>();
         dhStates = new HashMap<String, DHState>();
         messageBuffer = new HashMap<String, Queue<String>>();
 
@@ -197,7 +197,7 @@ public class P2PClient extends JFrame implements ActionListener {
                     buffer.add(str);
                     break;
                 case ESTABLISHED:
-                    StreamCipher cipher = ciphers.get(destinationId);
+                    SymmetricCipher cipher = ciphers.get(destinationId);
                     payload = new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipher.encrypt(str));
                     sOutput.writeObject(payload);
                     display("You: " + str);
@@ -277,7 +277,7 @@ public class P2PClient extends JFrame implements ActionListener {
                                 // establish Key
                                 BigInteger B = new BigInteger(message.getMessage());
                                 byte[] K = DiffieHellman.getSharedKey(B, secret);
-                                ciphers.put(senderId, new StreamCipher(K));
+                                ciphers.put(senderId, new SymmetricCipher(K));
                                 dhStates.put(senderId, DHState.ESTABLISHED);
 
                                 // send outstanding messages
@@ -285,7 +285,7 @@ public class P2PClient extends JFrame implements ActionListener {
                                 sendBuffer(senderId, buffer);
                                 break;
                             case SECRET_MESSAGE:
-                                StreamCipher cipher = ciphers.get(message.getId());
+                                SymmetricCipher cipher = ciphers.get(message.getId());
                                 plainText = cipher.decrypt(message.getMessage());
                                 System.out.println("Msg:" + plainText);
                                 display(socket.getInetAddress() + ":" + socket.getPort() + ": " + plainText);
@@ -343,7 +343,7 @@ public class P2PClient extends JFrame implements ActionListener {
 
             Socket socket = new Socket(getSenderIP(destination), getSenderPort(destination));
             ObjectOutputStream sOutput = new ObjectOutputStream(socket.getOutputStream());
-            StreamCipher cipher = ciphers.get(destination);
+            SymmetricCipher cipher = ciphers.get(destination);
 
             while (!buffer.isEmpty()) {
                 String outMessage = buffer.poll();

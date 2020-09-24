@@ -10,7 +10,7 @@ import dtu.appliedcrypto.SocketActionMessages.ChatMessageType;
 import dtu.appliedcrypto.chatapplication_server.ComponentManager;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.GenericThreadedComponent;
-import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipher;
+import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
 import dtu.appliedcrypto.chatapplication_server.exception.ComponentInitException;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
@@ -58,7 +58,7 @@ public class ClientEngine extends GenericThreadedComponent {
     private static ClientEngine componentInstance = null;
 
     private String id;
-    private StreamCipher cipher;
+    private SymmetricCipher cipher;
 
     public String getId() {
         return id;

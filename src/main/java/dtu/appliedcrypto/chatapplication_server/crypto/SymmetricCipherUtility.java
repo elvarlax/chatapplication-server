@@ -7,8 +7,8 @@ import java.util.Map;
 /**
  * This class simulates pre-established symmetric keys
  */
-public class StreamCipherUtility {
-  private final static Map<String, StreamCipher> cipherMap = new HashMap<String, StreamCipher>();
+public class SymmetricCipherUtility {
+  private final static Map<String, SymmetricCipher> cipherMap = new HashMap<String, SymmetricCipher>();
 
   /**
    * Gets or creates a stream cipher for Client-Server communication channel.
@@ -17,9 +17,9 @@ public class StreamCipherUtility {
    * @return a stream cipher for given channel
    * @throws GeneralSecurityException
    */
-  public static StreamCipher getCipher(String id) throws GeneralSecurityException {
+  public static SymmetricCipher getCipher(String id) throws GeneralSecurityException {
     if (!cipherMap.containsKey(id)) {
-      cipherMap.put(id, new StreamCipher(id));
+      cipherMap.put(id, new SymmetricCipher(id));
     }
     return cipherMap.get(id);
   }

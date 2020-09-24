@@ -15,7 +15,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.Arrays;
 
-public class StreamCipher {
+public class SymmetricCipher {
     private final SecretKey secret;
     public final static int IV_LENGTH = 16;
     public final static String CIPHER_TYPE = "AES/CBC/PKCS7Padding";
@@ -23,7 +23,7 @@ public class StreamCipher {
     /**
      * @param keyBytes some initial shared secret ("password")
      */
-    public StreamCipher(byte[] keyBytes) {
+    public SymmetricCipher(byte[] keyBytes) {
         if (keyBytes.length != 16 && keyBytes.length != 24 && keyBytes.length != 32) {
             throw new IllegalArgumentException("keyBytes wrong length for AES key");
         }
@@ -34,7 +34,7 @@ public class StreamCipher {
      * @param key
      * @throws NoSuchAlgorithmException
      */
-    public StreamCipher(String key) throws NoSuchAlgorithmException {
+    public SymmetricCipher(String key) throws NoSuchAlgorithmException {
         this(MessageDigest.getInstance("SHA256").digest(key.getBytes(StandardCharsets.UTF_8)));
     }
 

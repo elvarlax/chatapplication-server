@@ -6,7 +6,7 @@
 package dtu.appliedcrypto.chatapplication_server.components.ClientSocketEngine;
 
 import dtu.appliedcrypto.chatapplication_server.ComponentManager;
-import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipherUtility;
+import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -31,7 +31,7 @@ public class ListenFromServer extends Thread {
             synchronized (sInput) {
                 try {
                     byte[] cipherText = (byte[]) sInput.readObject();
-                    String msg = StreamCipherUtility.getCipher(cipherId).decrypt(cipherText);
+                    String msg = SymmetricCipherUtility.getCipher(cipherId).decrypt(cipherText);
 
                     if (msg.contains("#")) {
                         ClientSocketGUI.getInstance().appendPrivateChat(msg + "\n");

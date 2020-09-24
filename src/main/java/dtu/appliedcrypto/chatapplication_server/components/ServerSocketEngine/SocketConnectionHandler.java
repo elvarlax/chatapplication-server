@@ -7,8 +7,8 @@ package dtu.appliedcrypto.chatapplication_server.components.ServerSocketEngine;
 
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
-import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipher;
-import dtu.appliedcrypto.chatapplication_server.crypto.StreamCipherUtility;
+import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
+import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
 import java.io.IOException;
@@ -356,13 +356,13 @@ public class SocketConnectionHandler implements Runnable {
             try {
                 /** Wait until there is something in the stream to be read... */
                 cm = (ChatMessage) socketReader.readObject();
-                StreamCipher cipher;
+                SymmetricCipher cipher;
                 String message;
 
                 // Switch on the type of message receive
                 switch (cm.getType()) {
                     case SECRET_MESSAGE:
-                        cipher = StreamCipherUtility.getCipher(cm.getId());
+                        cipher = SymmetricCipherUtility.getCipher(cm.getId());
                         message = cipher.decrypt(cm.getMessage());
                         SocketServerEngine.getInstance().broadcast(userName + ": " + message);
                         break;
@@ -385,7 +385,7 @@ public class SocketConnectionHandler implements Runnable {
                         SocketServerEngine.getInstance().printEstablishedSocketInfo();
                         break;
                     case PRIVATE_MESSAGE:
-                        cipher = StreamCipherUtility.getCipher(cm.getId());
+                        cipher = SymmetricCipherUtility.getCipher(cm.getId());
                         message = cipher.decrypt(cm.getMessage());
                         String[] temp = message.split(",");
                         int PortNo = Integer.valueOf(temp[0]);
@@ -446,7 +446,7 @@ public class SocketConnectionHandler implements Runnable {
         }
         // write the message to the stream
         try {
-            StreamCipher cipher = StreamCipherUtility.getCipher(getUserName());
+            SymmetricCipher cipher = SymmetricCipherUtility.getCipher(getUserName());
             byte[] cipherText = cipher.encrypt(msg);
             socketWriter.writeObject(cipherText);
         }
