@@ -10,21 +10,23 @@ public class Certificates {
     KeyStore ks;
     FileInputStream ksfis;
     BufferedInputStream ksbufin;
-    final String ownAlias="Bob";
+    final String ownAlias = "Bob";
     final String keyStore = "KeyStore.jks";
     final String keyStorePass = "123456";
-    public Certificates() throws Exception{
-        ks = KeyStore.getInstance( "JKS" );
-        ksfis = new java.io.FileInputStream( keyStore );
-        ksbufin = new java.io.BufferedInputStream( ksfis );
-        ks.load( ksbufin, keyStorePass.toCharArray() );
+
+    public Certificates() throws Exception {
+        ks = KeyStore.getInstance("JKS");
+        ksfis = new java.io.FileInputStream(keyStore);
+        ksbufin = new java.io.BufferedInputStream(ksfis);
+        ks.load(ksbufin, keyStorePass.toCharArray());
     }
-    public boolean verifyCert(){
-        //TO-DO
+
+    public boolean verifyCert(String cert) {
         return false;
     }
-    public PublicKey extractPublicKey(String alias) throws Exception{
-        Certificate cert = ks.getCertificate( alias );
+
+    public PublicKey extractPublicKey(String alias) throws Exception {
+        Certificate cert = ks.getCertificate(alias);
         PublicKey pubKey = cert.getPublicKey();
         return pubKey;
     }
