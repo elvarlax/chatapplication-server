@@ -180,12 +180,14 @@ public class SocketConnectionHandler implements Runnable {
             /** Read the username */
             byte[][] incomingObj = (byte[][]) socketReader.readObject();
             userName = new String(incomingObj[0]);
-            X509Certificate cert;
+            Certificate cert;
             CertificateFactory cf = CertificateFactory.getInstance("X509");
-            cert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(incomingObj[1]));
-            Certificates certHandler = new Certificates();
-            if(!certHandler.verifyCert(cert,(X509Certificate) certHandler.getCert("TestCA"))){
-                throw new Exception("Invalid certificate");
+            cert = cf.generateCertificate(new ByteArrayInputStream(incomingObj[1]));
+            Certificates certHandler = new Certificates("temp", "temp");
+            try{
+                certHandler.verify(cert,(X509Certificate) certHandler.getCert("TestCA"));
+            } catch(Exception e){
+                throw new Exception("Invalid certificate: "+e.getMessage());
             }
             int port = handleConnection.getPort();
             SocketServerGUI.getInstance().appendEvent(userName + " just connected at port number: " + port + "\n");
