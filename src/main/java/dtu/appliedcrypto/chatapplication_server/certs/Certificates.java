@@ -11,7 +11,6 @@ public class Certificates {
     KeyStore ks;
     FileInputStream ksfis;
     BufferedInputStream ksbufin;
-    final String ownAlias = "Bob";
     final String keyStore = "KeyStore.jks";
     final String keyStorePass = "123456";
 
@@ -30,7 +29,7 @@ public class Certificates {
         PublicKey pubKey = cert.getPublicKey();
         return pubKey;
     }
-    public Certificate getCert(String alias) throws Exception{
+    public Certificate getCert(String alias) throws Exception{//Aliases: Alice, Bob, Charlie, TestCA
         Certificate cert = ks.getCertificate(alias);
         return cert;
     }

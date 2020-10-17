@@ -11,12 +11,17 @@ import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.io.StreamCorruptedException;
 import java.net.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.GeneralSecurityException;
 import java.util.Vector;
 
@@ -172,7 +177,16 @@ public class SocketConnectionHandler implements Runnable {
             socketReader = new ObjectInputStream(handleConnection.getInputStream());
 
             /** Read the username */
-            userName = (String) socketReader.readObject();
+            byte[][] incomingObj = (byte[][]) socketReader.readObject();
+            userName = new String(incomingObj[0]);
+            X509Certificate cert;
+            try{
+                CertificateFactory cf = CertificateFactory.getInstance("X509");
+                cert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(incomingObj[1]));
+            } catch (CertificateException ce){
+                ce.printStackTrace();
+            }
+            
             int port = handleConnection.getPort();
             SocketServerGUI.getInstance().appendEvent(userName + " just connected at port number: " + port + "\n");
 
