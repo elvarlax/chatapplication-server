@@ -1,5 +1,6 @@
 package dtu.appliedcrypto.chatapplication_server.crypto;
 
+import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +20,13 @@ public class SymmetricCipherUtility {
    */
   public static SymmetricCipher getCipher(String id) throws GeneralSecurityException {
     if (!cipherMap.containsKey(id)) {
-      cipherMap.put(id, new SymmetricCipher(id));
+      throw new GeneralSecurityException("Cipher was not initialized");
+    }
+    return cipherMap.get(id);
+  }
+  public static SymmetricCipher getCipher(String id, BigInteger key) throws GeneralSecurityException {
+    if (!cipherMap.containsKey(id)) {
+      cipherMap.put(id, new SymmetricCipher(key));
     }
     return cipherMap.get(id);
   }

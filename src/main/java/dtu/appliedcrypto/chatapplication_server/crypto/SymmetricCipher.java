@@ -10,6 +10,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.SecretKey;
 import javax.crypto.Cipher;
+import java.math.BigInteger;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -36,6 +37,9 @@ public class SymmetricCipher {
      */
     public SymmetricCipher(String key) throws NoSuchAlgorithmException {
         this(MessageDigest.getInstance("SHA256").digest(key.getBytes(StandardCharsets.UTF_8)));
+    }
+    public SymmetricCipher(BigInteger key) throws NoSuchAlgorithmException {
+        this(MessageDigest.getInstance("SHA256").digest(key.toByteArray()));
     }
 
     /**

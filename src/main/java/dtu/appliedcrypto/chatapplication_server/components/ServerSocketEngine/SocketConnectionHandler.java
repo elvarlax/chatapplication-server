@@ -8,6 +8,7 @@ package dtu.appliedcrypto.chatapplication_server.components.ServerSocketEngine;
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
 import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
+import dtu.appliedcrypto.chatapplication_server.crypto.DiffieHellman;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
@@ -18,6 +19,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.io.StreamCorruptedException;
+import java.math.BigInteger;
 import java.net.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -55,6 +57,11 @@ public class SocketConnectionHandler implements Runnable {
      * The username of the client that we are handling
      */
     private String userName;
+
+    /**
+     * The symmetric key of the client
+     */
+    private BigInteger symmetricKey;
 
     /**
      * The only type of message that we will receive
@@ -177,13 +184,15 @@ public class SocketConnectionHandler implements Runnable {
             socketWriter = new ObjectOutputStream(handleConnection.getOutputStream());
             socketReader = new ObjectInputStream(handleConnection.getInputStream());
 
-            /** Read the username */
+            /** Read the incoming object: index 0 - username, index 1 - certificate */
             byte[][] incomingObj = (byte[][]) socketReader.readObject();
             userName = new String(incomingObj[0]);
             Certificate cert;
             CertificateFactory cf = CertificateFactory.getInstance("X509");
             cert = cf.generateCertificate(new ByteArrayInputStream(incomingObj[1]));
-            Certificates certHandler = new Certificates("temp", "temp");
+            //Create a new instance of the certificate handler
+            Certificates certHandler = new Certificates("temp", "temp");//------------TO DO: change to the ks location + ks pw
+            //Verify certificate
             try{
                 certHandler.verify(cert,(X509Certificate) certHandler.getCert("TestCA"));
             } catch(Exception e){
@@ -191,7 +200,11 @@ public class SocketConnectionHandler implements Runnable {
             }
             int port = handleConnection.getPort();
             SocketServerGUI.getInstance().appendEvent(userName + " just connected at port number: " + port + "\n");
-            socketWriter.writeObject(certHandler.getCert("ServerCert"));
+            //Generate a symmetric key
+            symmetricKey = DiffieHellman.generateRandomSecret();
+            byte[][] outputObj = {certHandler.getCert("Server").getEncoded(), symmetricKey.toByteArray()};
+            //Send own certificate for verification together with the secret key
+            socketWriter.writeObject(outputObj);
             return true;
         } catch (StreamCorruptedException sce) {
             /** Keep track of the exception in the logging stream... */
@@ -501,7 +514,7 @@ public class SocketConnectionHandler implements Runnable {
         }
         // write the message to the stream
         try {
-            SymmetricCipher cipher = SymmetricCipherUtility.getCipher(getUserName());
+            SymmetricCipher cipher = SymmetricCipherUtility.getCipher(getUserName(), symmetricKey);
             byte[] cipherText = cipher.encrypt(msg);
             socketWriter.writeObject(cipherText);
         }
