@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package dtu.appliedcrypto.chatapplication_server.certs;
+package Certificates;
 
 import java.io.FileInputStream;
 import java.security.PublicKey;
