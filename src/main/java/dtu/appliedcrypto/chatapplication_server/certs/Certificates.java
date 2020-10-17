@@ -28,4 +28,8 @@ public class Certificates {
         PublicKey pubKey = cert.getPublicKey();
         return pubKey;
     }
+    public Certificate getCert(String alias) throws Exception{
+        Certificate cert = ks.getCertificate(alias);
+        return cert;
+    }
 }
