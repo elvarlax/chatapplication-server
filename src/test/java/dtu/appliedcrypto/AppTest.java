@@ -1,8 +1,9 @@
 package dtu.appliedcrypto;
 
-import static org.junit.Assert.assertTrue;
-
+import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 import org.junit.Test;
+
+import java.security.cert.Certificate;
 
 /**
  * Unit test for simple App.
@@ -10,11 +11,15 @@ import org.junit.Test;
 public class AppTest 
 {
     /**
-     * Rigorous Test :-)
+     * Verify certificate
      */
     @Test
-    public void shouldAnswerWithTrue()
-    {
-        assertTrue( true );
+    public void verifyCertificate() throws Exception {
+        String keyStore = "certificates/AliceKeyStore.jks";
+        String keyPass = "123456";
+        Certificates certificates = new Certificates(keyStore, keyPass);
+        Certificate alice = certificates.getCert("Alice");
+        Certificate ca = certificates.getCert("TestCA");
+        certificates.verify(ca, alice);
     }
 }
