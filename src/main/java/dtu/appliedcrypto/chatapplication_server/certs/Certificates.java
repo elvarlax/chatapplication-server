@@ -11,17 +11,18 @@ public class Certificates {
     KeyStore ks;
     FileInputStream ksfis;
     BufferedInputStream ksbufin;
-    final String ownAlias="Bob";
+    final String ownAlias = "Bob";
     final String keyStore = "KeyStore.jks";
     final String keyStorePass = "123456";
-    public Certificates() throws Exception{
-        ks = KeyStore.getInstance( "JKS" );
-        ksfis = new java.io.FileInputStream( keyStore );
-        ksbufin = new java.io.BufferedInputStream( ksfis );
-        ks.load( ksbufin, keyStorePass.toCharArray() );
+
+    public Certificates() throws Exception {
+        ks = KeyStore.getInstance("JKS");
+        ksfis = new java.io.FileInputStream(keyStore);
+        ksbufin = new java.io.BufferedInputStream(ksfis);
+        ks.load(ksbufin, keyStorePass.toCharArray());
     }
-    public boolean verifyCert(){
-        //TO-DO
+
+    public boolean verifyCert(String cert) {
         return false;
     }
     public PublicKey getPublicKey(String alias) throws Exception{
