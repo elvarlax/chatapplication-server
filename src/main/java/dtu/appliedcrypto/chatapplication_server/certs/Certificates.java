@@ -7,6 +7,7 @@ import java.security.PrivateKey;
 import java.io.FileInputStream;
 import java.io.BufferedInputStream;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 
 public class Certificates {
 
@@ -37,6 +38,12 @@ public class Certificates {
 
   public Certificate getCert(String alias) throws Exception {
     Certificate cert = ks.getCertificate(alias);
+    return cert;
+  }
+
+  public Certificate getCert(FileInputStream file) throws Exception {
+    CertificateFactory factory = CertificateFactory.getInstance("X.509");
+    Certificate cert = factory.generateCertificate(file);
     return cert;
   }
 
