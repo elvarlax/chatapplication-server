@@ -6,6 +6,7 @@
 package dtu.appliedcrypto.chatapplication_server.components.ServerSocketEngine;
 
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
+import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
@@ -180,16 +181,15 @@ public class SocketConnectionHandler implements Runnable {
             byte[][] incomingObj = (byte[][]) socketReader.readObject();
             userName = new String(incomingObj[0]);
             X509Certificate cert;
-            try{
-                CertificateFactory cf = CertificateFactory.getInstance("X509");
-                cert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(incomingObj[1]));
-            } catch (CertificateException ce){
-                ce.printStackTrace();
+            CertificateFactory cf = CertificateFactory.getInstance("X509");
+            cert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(incomingObj[1]));
+            Certificates certHandler = new Certificates();
+            if(!certHandler.verifyCert(cert,(X509Certificate) certHandler.getCert("TestCA"))){
+                throw new Exception("Invalid certificate");
             }
-            
             int port = handleConnection.getPort();
             SocketServerGUI.getInstance().appendEvent(userName + " just connected at port number: " + port + "\n");
-
+            socketWriter.writeObject(certHandler.getCert("ServerCert"));
             return true;
         } catch (StreamCorruptedException sce) {
             /** Keep track of the exception in the logging stream... */
@@ -215,7 +215,27 @@ public class SocketConnectionHandler implements Runnable {
             SocketServerGUI.getInstance().appendEvent(userName + " Exception reading streams:" + cnfe + "\n");
 
             return false;
-        } catch (OptionalDataException ode) {
+        } catch(CertificateException ce) {
+                        /** Keep track of the exception in the logging stream... */
+                        SocketServerGUI.getInstance()
+                        .appendEvent("[" + handlerName + "]:: Certificate excp during stream reader/writer init -- "
+                                + ce.getMessage() + " (" + connectionStat.getCurrentDate() + ")\n");
+    
+                /**
+                 * Notify the SocketServerEngine that we are about to die in order to create a
+                 * new SSLConnectionHandler in our place
+                 */
+                SocketServerEngine.getInstance().addConnectionHandlerToPool(handlerName);
+    
+                /** Notify the SocketServerEngine to remove us from the occupance pool... */
+                SocketServerEngine.getInstance().removeConnHandlerOccp(handlerName);
+    
+                /** Then shut down... */
+                this.stop();
+    
+                return false;
+        }
+         catch (OptionalDataException ode) {
             /** Keep track of the exception in the logging stream... */
             SocketServerGUI.getInstance()
                     .appendEvent("[" + handlerName + "]:: Optional data excp during stream reader/writer init -- "
@@ -239,6 +259,25 @@ public class SocketConnectionHandler implements Runnable {
             SocketServerGUI.getInstance()
                     .appendEvent("[" + handlerName + "]: IOException during stream read/writer init -- "
                             + ioe.getMessage() + " (" + connectionStat.getCurrentDate() + ")\n");
+
+            /**
+             * Notify the SocketServerEngine that we are about to die in order to create a
+             * new SSLConnectionHandler in our place
+             */
+            SocketServerEngine.getInstance().addConnectionHandlerToPool(handlerName);
+
+            /** Notify the SocketServerEngine to remove us from the occupance pool... */
+            SocketServerEngine.getInstance().removeConnHandlerOccp(handlerName);
+
+            /** Then shut down... */
+            this.stop();
+
+            return false;
+        } catch (Exception e) {
+            /** Keep track of the exception in the logging stream... */
+            SocketServerGUI.getInstance()
+                    .appendEvent("[" + handlerName + "]: Exception during stream read/writer init -- "
+                            + e.getMessage() + " (" + connectionStat.getCurrentDate() + ")\n");
 
             /**
              * Notify the SocketServerEngine that we are about to die in order to create a
