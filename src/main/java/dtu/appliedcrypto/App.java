@@ -22,7 +22,7 @@ public class App {
         System.out.println(mode);
         config.setValue("Mode", mode);
 
-        System.out.println(args[0]);
+        System.out.println(args[1]);
         System.out.println(prop);
         config.setValue("PropertiesFile.Folder", prop);
 
