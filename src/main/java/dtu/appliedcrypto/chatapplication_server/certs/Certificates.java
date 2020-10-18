@@ -35,6 +35,11 @@ public class Certificates {
         return pubKey;
     }
 
+    public PrivateKey getPrivateKey(String alias, String password) throws Exception {
+        PrivateKey privKey = (PrivateKey) ks.getKey(alias, password.toCharArray());
+        return privKey;
+    }
+
     public Certificate getCert(String alias) throws Exception {
         Certificate cert = ks.getCertificate(alias);
         return cert;
@@ -49,10 +54,5 @@ public class Certificates {
     public void addCert(String alias, Certificate cert) throws Exception {
         Entry entry = (Entry) cert;
         ks.setEntry(alias, entry, null);
-    }
-
-    public PrivateKey getPrivateKey(String alias, String password) throws Exception {
-        PrivateKey privKey = (PrivateKey) ks.getKey(alias, password.toCharArray());
-        return privKey;
     }
 }
