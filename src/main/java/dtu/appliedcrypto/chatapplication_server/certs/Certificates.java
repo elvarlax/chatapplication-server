@@ -9,7 +9,6 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 
 public class Certificates {
 
@@ -20,17 +19,18 @@ public class Certificates {
 
   private final KeyStore store;
   final String keyStorePass;
+  final File keyStoreFile;
 
   public Certificates(String keyStoreFile, String keyStorePass) throws Exception {
     this.store = KeyStore.getInstance(KEY_STORE_TYPE);
+    this.keyStoreFile = new File(keyStoreFile);
     this.keyStorePass = keyStorePass;
 
-    File file = new File(keyStoreFile);
-    if (file.exists()) {
-      store.load(new BufferedInputStream(new FileInputStream(file)), this.keyStorePass.toCharArray());
+    if (this.keyStoreFile.exists()) {
+      store.load(new BufferedInputStream(new FileInputStream(this.keyStoreFile)), this.keyStorePass.toCharArray());
     } else {
       store.load(null, null);
-      store.store(new FileOutputStream(file), this.keyStorePass.toCharArray());
+      store.store(new FileOutputStream(this.keyStoreFile), this.keyStorePass.toCharArray());
     }
 
     if (getCert(CA_TOKEN) == null || getCert(CERT_TOKEN) == null) {
@@ -40,14 +40,13 @@ public class Certificates {
 
   public Certificates(String keyStoreFile, String keyStorePass, String caFile, String certFile) throws Exception {
     this.store = KeyStore.getInstance(KEY_STORE_TYPE);
+    this.keyStoreFile = new File(keyStoreFile);
     this.keyStorePass = keyStorePass;
 
-    File file = new File(keyStoreFile);
-    if (file.exists()) {
-      store.load(new BufferedInputStream(new FileInputStream(file)), this.keyStorePass.toCharArray());
+    if (this.keyStoreFile.exists()) {
+      store.load(new BufferedInputStream(new FileInputStream(this.keyStoreFile)), this.keyStorePass.toCharArray());
     } else {
       store.load(null, null);
-      store.store(new FileOutputStream(file), this.keyStorePass.toCharArray());
     }
 
     // store CA certificate
@@ -59,6 +58,11 @@ public class Certificates {
 
   public void addCert(String alias, Certificate cert) throws Exception {
     store.setCertificateEntry(alias, cert);
+
+    // store changes
+    FileOutputStream fos = new FileOutputStream(this.keyStoreFile);
+    store.store(fos, this.keyStorePass.toCharArray());
+    fos.close();
   }
 
   public Certificate getCert(String alias) throws Exception {
@@ -83,7 +87,7 @@ public class Certificates {
   }
 
   public void verify(Certificate target) throws Exception {
-    Certificate ca = getCert("CA");
+    Certificate ca = getCert(CA_TOKEN);
     verify(ca, target);
   }
 
