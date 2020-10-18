@@ -191,10 +191,11 @@ public class SocketConnectionHandler implements Runnable {
             CertificateFactory cf = CertificateFactory.getInstance("X509");
             cert = cf.generateCertificate(new ByteArrayInputStream(incomingObj[1]));
             //Create a new instance of the certificate handler
-            Certificates certHandler = new Certificates(System.getProperty("user.dir")+"\\certificates\\ServerKeyStore.jks", "123456");//------------TO DO: change to the ks location + ks pw
+            Certificates certHandler = new Certificates(System.getProperty("user.dir")+"\\certificates\\ServerKeyStore.jks", "123456");
             //Verify certificate
             try{
-                certHandler.verify(certHandler.getCert("TestCA"),cert);
+                certHandler.verify(certHandler.getCert("testca"), cert);
+                certHandler.addCert(userName.toLowerCase(), cert);
             } catch(Exception e){
                 throw new Exception("Invalid certificate: "+e.getMessage());
             }
