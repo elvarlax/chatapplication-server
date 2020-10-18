@@ -191,10 +191,10 @@ public class SocketConnectionHandler implements Runnable {
             CertificateFactory cf = CertificateFactory.getInstance("X509");
             cert = cf.generateCertificate(new ByteArrayInputStream(incomingObj[1]));
             //Create a new instance of the certificate handler
-            Certificates certHandler = new Certificates("temp", "temp");//------------TO DO: change to the ks location + ks pw
+            Certificates certHandler = new Certificates(System.getProperty("user.dir")+"\\certificates\\ServerKeyStore.jks", "123456");//------------TO DO: change to the ks location + ks pw
             //Verify certificate
             try{
-                certHandler.verify(cert,(X509Certificate) certHandler.getCert("TestCA"));
+                certHandler.verify(certHandler.getCert("TestCA"),cert);
             } catch(Exception e){
                 throw new Exception("Invalid certificate: "+e.getMessage());
             }
@@ -430,7 +430,7 @@ public class SocketConnectionHandler implements Runnable {
                 // Switch on the type of message receive
                 switch (cm.getType()) {
                     case SECRET_MESSAGE:
-                        cipher = SymmetricCipherUtility.getCipher(cm.getId());
+                        cipher = SymmetricCipherUtility.getCipher(cm.getId(), symmetricKey);
                         message = cipher.decrypt(cm.getMessage());
                         SocketServerEngine.getInstance().broadcast(userName + ": " + message);
                         break;
@@ -453,7 +453,7 @@ public class SocketConnectionHandler implements Runnable {
                         SocketServerEngine.getInstance().printEstablishedSocketInfo();
                         break;
                     case PRIVATE_MESSAGE:
-                        cipher = SymmetricCipherUtility.getCipher(cm.getId());
+                        cipher = SymmetricCipherUtility.getCipher(cm.getId(), symmetricKey);
                         message = cipher.decrypt(cm.getMessage());
                         String[] temp = message.split(",");
                         int PortNo = Integer.valueOf(temp[0]);

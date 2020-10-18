@@ -8,18 +8,23 @@ package dtu.appliedcrypto.chatapplication_server.components.ClientSocketEngine;
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
 import dtu.appliedcrypto.SocketActionMessages.ChatMessageType;
 import dtu.appliedcrypto.chatapplication_server.ComponentManager;
+import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.GenericThreadedComponent;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
+import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
 import dtu.appliedcrypto.chatapplication_server.exception.ComponentInitException;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
+import java.math.BigInteger;
 import java.net.*;
 import java.security.GeneralSecurityException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 
 /**
  * @author atgianne
@@ -116,21 +121,48 @@ public class ClientEngine extends GenericThreadedComponent {
             socketWriter = new ObjectOutputStream(socket.getOutputStream());
             socketReader = new ObjectInputStream(socket.getInputStream());
 
-            /** Start the ListeFromServer thread... */
-            id = configManager.getValue("Client.Username");
-            new ListenFromServer(id).start();
+           
         } catch (IOException ioe) {
             display("Exception creating new Input/Output Streams: " + ioe + "\n");
             ComponentManager.getInstance().fatalException(ioe);
         }
 
-        /** Send our username to the server... */
+        /** Send our username and certificate to the server... */
         try {
-            socketWriter.writeObject(configManager.getValue("Client.Username"));
+            id = configManager.getValue("Client.Username");
+            Certificates certHandler = new Certificates(System.getProperty("user.dir")+"\\certificates\\"+id+"KeyStore.jks", "123456");
+            CertificateFactory cf = CertificateFactory.getInstance("X509");
+            Certificate ownCert = certHandler.getCert(id);
+            byte[][] outputObj = {id.getBytes(), ownCert.getEncoded()};
+            socketWriter.writeObject( outputObj );
+            /** Recieve the server certificate and symmetric key */
+            byte[][] inputObj = (byte[][]) socketReader.readObject();
+            
+            Certificate serverCert = cf.generateCertificate(new ByteArrayInputStream(inputObj[0]));
+            /** Verify server certificate */
+            try{
+                certHandler.verify(certHandler.getCert("TestCA"), serverCert);
+            } catch(Exception e){
+                throw new Exception("Invalid certificate: "+e.getMessage());
+            }
+            BigInteger key = new BigInteger(inputObj[1]);
+            /** Initialize the cipher with the key */
+            cipher = SymmetricCipherUtility.getCipher(id, key);
+             /** Start the ListeFromServer thread... */
+             new ListenFromServer(id, key).start();
+
         } catch (IOException ioe) {
             display("Exception during login: " + ioe);
             shutdown();
             ComponentManager.getInstance().fatalException(ioe);
+        } catch (ClassNotFoundException cnfe) {
+            display("Exception during login: " + cnfe);
+            shutdown();
+            ComponentManager.getInstance().fatalException(cnfe);
+        } catch (Exception e) {
+            display("Exception during login: " + e);
+            shutdown();
+            ComponentManager.getInstance().fatalException(e);
         }
 
         super.initialize();
