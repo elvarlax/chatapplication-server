@@ -215,6 +215,16 @@ public class P2PClient extends JFrame implements ActionListener {
         ta.setCaretPosition(ta.getText().length() - 1);
     }
 
+    public void stopClient(ClientWorker client) {
+        try {
+            client.socket.close();
+            client.sInput.close();
+        } catch (IOException ioe) {
+            display("Could not close client");
+        }
+        clientServer.clients.remove(client);
+    }
+
     /**
      * Method that is invoked when a client wants to connect to the Socket Server
      * spawn from another client in order to initiate their P2P communication.
@@ -334,6 +344,7 @@ public class P2PClient extends JFrame implements ActionListener {
                     display("Could not ready correctly the messages from the connected client: " + ex.getMessage());
                     // clientConnect = false;
                     this.keepGoing = false;
+                    stopClient(this);
                 } catch (ClassNotFoundException ex) {
                     Logger.getLogger(P2PClient.class.getName()).log(Level.SEVERE, null, ex);
                 }
