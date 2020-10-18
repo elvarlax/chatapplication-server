@@ -75,11 +75,13 @@ public class ChatApplicationServerPropertiesLoader implements IComponent {
          * The default value of the lotus-server.properties folder is
          * "dist/chatapplication-server.properties"
          */
-        configManager.setDefaultValue("PropertiesFile.Folder", "chatapplication.properties");
+        // configManager.setDefaultValue("PropertiesFile.Folder",
+        // "chatapplication.properties");
 
         /** Try to load the chatapplication-server.properties file */
         try {
-            CSProps.load(new FileInputStream(configManager.getValue("PropertiesFile.Folder")));
+            String propsFile = configManager.getValue("PropertiesFile.Folder");
+            CSProps.load(new FileInputStream(propsFile));
 
             /**
              * Load the number of Connection Handlers that will reside in the
@@ -88,6 +90,11 @@ public class ChatApplicationServerPropertiesLoader implements IComponent {
             if (!checkPropertyValue("ConnectionHandlers.Number", CSProps.getProperty("ConnectionHandlers")))
                 throw new PropertyLoadException("ConnectionHandlers.Number",
                         "\n[ChatApplicationServer.PropertiesLoader]: Exception while loading property ");
+
+            if (!checkPropertyValue("JKS.Secret", CSProps.getProperty("Secret"))) {
+                throw new PropertyLoadException("Secret",
+                        "\n[ChatApplicationServer.PropertiesLoader]: Exception while loading Secret");
+            }
 
             /**
              * Load the port number where the server is going to listen; if "null" or ""

@@ -17,6 +17,7 @@ import java.util.HashMap;
  * @author atgianne
  */
 public class ConfigManager implements IComponent {
+
     /**
      * HasMap used for storing all the config values
      */
@@ -31,6 +32,7 @@ public class ConfigManager implements IComponent {
      * Creates a new instance of ConfigManager
      */
     public ConfigManager() {
+        configValues = new HashMap<String, String>();
     }
 
     /**
@@ -51,7 +53,8 @@ public class ConfigManager implements IComponent {
      */
     public void initialize() {
         /** Initialize the map holding all the given system configuration values... */
-        configValues = new HashMap<String, String>();
+        // configValues = new HashMap<String, String>();
+        getInstance();
     }
 
     /**

@@ -3,6 +3,7 @@ package dtu.appliedcrypto;
 import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
+
 import java.security.cert.Certificate;
 
 import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
@@ -26,6 +27,10 @@ public class AppTest {
         String keyPass = "123456";
         Certificates certs = new Certificates(keyStore, keyPass);
         Certificate cert = certs.getCert("Alice");
+
+        assertNotNull(cert);
+
+        cert = certs.getCert("testca");
         assertNotNull(cert);
     }
 }

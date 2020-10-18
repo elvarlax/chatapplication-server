@@ -5,19 +5,34 @@ import java.security.Security;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import dtu.appliedcrypto.chatapplication_server.ChatApplicationServerEngine;
+import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 
 public class App {
-    public static void SetupSecurity() {
+    public static void setupSecurity() {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    public static void main(String[] args) {
-        String mode = ChatApplicationServerEngine.getCommandLineArgPasswd(args);
+    public static ConfigManager parseArgs(String[] args) {
+        ConfigManager config = ConfigManager.getInstance();
+
+        String mode = ChatApplicationServerEngine.getCommandLineArgPasswd(args, "mode");
+        String prop = ChatApplicationServerEngine.getCommandLineArgPasswd(args, "props", "chatapplication.properties");
 
         System.out.println(args[0]);
         System.out.println(mode);
+        config.setValue("Mode", mode);
 
-        SetupSecurity();
+        System.out.println(args[0]);
+        System.out.println(prop);
+        config.setValue("PropertiesFile.Folder", prop);
+
+        return config;
+    }
+
+    public static void main(String[] args) {
+        setupSecurity();
+        ConfigManager config = parseArgs(args);
+        String mode = config.getValue("Mode");
 
         if (mode.equals("Server")) {
             /** Boot up the ChatApplicationServer system... */

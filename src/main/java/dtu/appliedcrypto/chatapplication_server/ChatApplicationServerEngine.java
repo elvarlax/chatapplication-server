@@ -137,11 +137,13 @@ public class ChatApplicationServerEngine {
      * For the first what is expected is 'Mode=Server' whereas for the latter
      * 'Mode=Client'
      *
-     * @param args The command line arguments given by the user
+     * @param args         The command line arguments given by the user
+     * @param option       The option token, lowercased
+     * @param defaultValue The default value, if option not provided
      * @return String holding the mode of operation; either running the Server or
      *         the Client
      */
-    public static String getCommandLineArgPasswd(String[] args) {
+    public static String getCommandLineArgPasswd(String[] args, String option, String defaultValue) {
         /** Auxiliary objects... */
         int delimPos;
         String value;
@@ -156,13 +158,17 @@ public class ChatApplicationServerEngine {
                 continue;
 
             /** Check the case of the 'KeyStore.Password' key...Ignore upper case */
-            if (args[i].substring(0, delimPos).toLowerCase().equals("mode")) {
+            if (args[i].substring(0, delimPos).toLowerCase().equals(option)) {
                 // String key = args[i].substring(0, delimPos).toLowerCase();
                 value = args[i].substring(delimPos + 1);
                 return value;
             }
         }
 
-        return "";
+        return defaultValue;
+    }
+
+    public static String getCommandLineArgPasswd(String[] args, String option) {
+        return getCommandLineArgPasswd(args, option, "");
     }
 }
