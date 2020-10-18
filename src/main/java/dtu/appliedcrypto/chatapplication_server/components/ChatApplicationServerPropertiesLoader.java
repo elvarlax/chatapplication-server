@@ -91,10 +91,19 @@ public class ChatApplicationServerPropertiesLoader implements IComponent {
                 throw new PropertyLoadException("ConnectionHandlers.Number",
                         "\n[ChatApplicationServer.PropertiesLoader]: Exception while loading property ");
 
-            if (!checkPropertyValue("JKS.Secret", CSProps.getProperty("Secret"))) {
-                throw new PropertyLoadException("Secret",
+            if (!checkPropertyValue("KeyStore.File", CSProps.getProperty("KeyStoreFile"))) {
+                throw new PropertyLoadException("KeyStore.File",
+                        "\n[ChatApplicationServer.PropertiesLoader]: Exception while loading KeyStore");
+            }
+
+            if (!checkPropertyValue("KeyStore.Secret", CSProps.getProperty("KeyStoreSecret"))) {
+                throw new PropertyLoadException("KeyStore.Secret",
                         "\n[ChatApplicationServer.PropertiesLoader]: Exception while loading Secret");
             }
+
+            // these are optional
+            checkPropertyValue("KeyStore.CA", CSProps.getProperty("KeyStoreCA"));
+            checkPropertyValue("KeyStore.Cert", CSProps.getProperty("KeyStoreCert"));
 
             /**
              * Load the port number where the server is going to listen; if "null" or ""
@@ -128,7 +137,7 @@ public class ChatApplicationServerPropertiesLoader implements IComponent {
          * Check the property value and pass it to the ConfigManager component if not
          * "null"
          */
-        if (!loadedProp.equals("null") && !loadedProp.equals("")) {
+        if (!(loadedProp == null) && !loadedProp.equals("")) {
             configManager.setValue(configValue, loadedProp);
             return true;
         }
