@@ -7,7 +7,11 @@ package dtu.appliedcrypto.chatapplication_server.components.ClientSocketEngine;
 
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
 import dtu.appliedcrypto.SocketActionMessages.ChatMessageType;
+import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
+import dtu.appliedcrypto.chatapplication_server.crypto.DHState;
+import dtu.appliedcrypto.chatapplication_server.crypto.DiffieHellman;
+import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -17,6 +21,8 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -28,6 +34,11 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import java.net.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,8 +47,15 @@ import java.util.logging.Logger;
  * @author atgianne
  */
 public class P2PClient extends JFrame implements ActionListener {
+    /**
+     *
+     */
+    private static final long serialVersionUID = -8800761976188484413L;
+
     private String host;
     private String port;
+    private String alias;
+
     private final JTextField tfServer;
     private final JTextField tfPort;
     private final JTextField tfsPort;
@@ -64,8 +82,24 @@ public class P2PClient extends JFrame implements ActionListener {
      */
     boolean isConnected;
 
-    P2PClient() {
+    private final BigInteger secret;
+    private Map<String, DHState> dhStates;
+    private Map<String, SymmetricCipher> ciphers;
+    private Map<String, Queue<String>> messageBuffer;
+    // private final Certificates cetrificates;
+
+    P2PClient(String userName) {
         super("P2P Client Chat");
+
+        alias = userName;
+
+        secret = DiffieHellman.generateRandomSecret();
+        // cetrificates = new Certificates(alias, "");
+
+        ciphers = new HashMap<String, SymmetricCipher>();
+        dhStates = new HashMap<String, DHState>();
+        messageBuffer = new HashMap<String, Queue<String>>();
+
         host = ConfigManager.getInstance().getValue("Server.Address");
         port = ConfigManager.getInstance().getValue("Server.PortNumber");
 
@@ -273,11 +307,44 @@ public class P2PClient extends JFrame implements ActionListener {
         return true;
     }
 
-    private class ListenFromClient extends Thread {
-        ServerSocket serverSocket;
+    private class ClientWorker extends Thread {
+        boolean keepGoing;
         Socket socket;
-        ObjectInputStream sInput = null;
-        boolean clientConnect;
+        ObjectInputStream sInput;
+
+        public ClientWorker(Socket socket) {
+            try {
+                this.socket = socket;
+                this.sInput = new ObjectInputStream(socket.getInputStream());
+                this.keepGoing = true;
+            } catch (IOException ioe) {
+                System.out.println("[P2PClient]:: Error firing up Socket Server " + ioe.getMessage());
+            }
+        }
+
+        @Override
+        public void run() {
+            while (keepGoing) {
+                try {
+                    ChatMessage message = (ChatMessage) sInput.readObject();
+                    String msg = new String(message.getMessage());
+                    System.out.println("Msg:" + msg);
+                    display(socket.getInetAddress() + ": " + socket.getPort() + ": " + msg);
+                } catch (IOException ex) {
+                    display("Could not ready correctly the messages from the connected client: " + ex.getMessage());
+                    // clientConnect = false;
+                    this.keepGoing = false;
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(P2PClient.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }
+
+    private class ListenFromClient extends Thread {
+        boolean keepGoing;
+        ServerSocket serverSocket;
+        List<ClientWorker> clients;
 
         public ListenFromClient() {
             try {
@@ -285,7 +352,7 @@ public class P2PClient extends JFrame implements ActionListener {
                 serverSocket = new ServerSocket(Integer.parseInt(tfsPort.getText()));
                 ta.append("Server is listening on port:" + tfsPort.getText() + "\n");
                 ta.setCaretPosition(ta.getText().length() - 1);
-                clientConnect = false;
+                // clientConnect = false;
                 keepGoing = true;
             } catch (IOException ioe) {
                 System.out.println("[P2PClient]:: Error firing up Socket Server " + ioe.getMessage());
@@ -295,42 +362,29 @@ public class P2PClient extends JFrame implements ActionListener {
         @Override
         public void run() {
             // infinite loop to wait for messages
+            clients = new LinkedList<ClientWorker>();
             while (keepGoing) {
                 /** Wait only when there are no connections... */
                 try {
-                    if (!clientConnect) {
-                        socket = serverSocket.accept(); // accept connection
-                        sInput = new ObjectInputStream(socket.getInputStream());
-                        clientConnect = true;
-                    }
+                    Socket socket = serverSocket.accept();
+                    ClientWorker client = new ClientWorker(socket);
+                    client.start();
+                    clients.add(client);
                 } catch (IOException ex) {
                     display("The Socket Server was closed: " + ex.getMessage());
                 }
 
-                // format message saying we are waiting
-                try {
-                    ChatMessage message = (ChatMessage) sInput.readObject();
-                    String msg = new String(message.getMessage());
-                    System.out.println("Msg:" + msg);
-                    display(socket.getInetAddress() + ": " + socket.getPort() + ": " + msg);
-                    // sInput.close();
-                    // socket.close();
-                } catch (IOException ex) {
-                    display("Could not ready correctly the messages from the connected client: " + ex.getMessage());
-                    clientConnect = false;
-                } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(P2PClient.class.getName()).log(Level.SEVERE, null, ex);
-                }
             }
         }
 
         public void shutDown() {
             try {
                 keepGoing = false;
-                if (socket != null) {
-                    sInput.close();
-                    socket.close();
+                for (ClientWorker clientWorker : clients) {
+                    clientWorker.sInput.close();
+                    clientWorker.socket.close();
                 }
+                clients = new LinkedList<ClientWorker>();
 
                 if (serverSocket != null) {
                     serverSocket.close();
