@@ -85,7 +85,7 @@ public class ConfigManager implements IComponent {
             /** If it is not in the map, return... */
             if (!configValues.containsKey(key)) {
                 System.err.println("Missing key [" + key + "]");
-                return "";
+                return null;
             }
 
             return (String) configValues.get(key);
