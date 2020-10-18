@@ -25,7 +25,7 @@ public class AppTest {
     }
 
     /**
-     * verify certificate with malicious agent
+     * Verify certificate with malicious agent
      */
     @Test(expected = SignatureException.class)
     public void verifyWithMaliciousAgent() throws Exception {
