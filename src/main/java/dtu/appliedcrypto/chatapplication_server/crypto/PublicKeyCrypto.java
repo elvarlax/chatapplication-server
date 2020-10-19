@@ -12,7 +12,7 @@ import java.util.Base64;
 
 
 public class PublicKeyCrypto {
-    private Cipher cipher;
+    private final Cipher cipher;
     private static final String MODP_2048_PRIME_HEX = ("FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1"
             + "29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD"
             + "EF9519B3 CD3A431B 302B0A6D F25F1437 4FE1356D 6D51C245"

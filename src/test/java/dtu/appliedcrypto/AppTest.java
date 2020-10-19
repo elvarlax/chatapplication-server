@@ -16,39 +16,32 @@ import static org.junit.Assert.assertEquals;
  */
 public class AppTest {
     /**
-     * Verify certificate
+     * Verify certificate that it works
      */
     @Test
-    public void verifyCertificate() throws Exception {
-        String keyStore = "certificates/AliceKeyStore.jks";
-        String keyPass = "123456";
-        Certificates certificates = new Certificates(keyStore, keyPass);
+    public void verifyCertificateThatWorks() throws Exception {
+        Certificates certificates = new Certificates("certificates/AliceKeyStore.jks", "123456");
         Certificate alice = certificates.getCert("Alice");
         Certificate ca = certificates.getCert("TestCA");
         certificates.verify(ca, alice);
     }
 
     /**
-     * Verify certificate with malicious agent
+     * Verify certificate that it does not work
      */
     @Test(expected = SignatureException.class)
-    public void verifyWithMaliciousAgent() throws Exception {
-        String keyStore = "certificates/AliceKeyStore.jks";
-        String keyPass = "123456";
-        Certificates certificates = new Certificates(keyStore, keyPass);
-        Certificate alice = certificates.getCert("Alice");
+    public void verifyCertificateNotWorks() throws Exception {
+        Certificates certificates = new Certificates("certificates/AliceKeyStore.jks", "123456");
         Certificate agent = certificates.getCert(new FileInputStream("certificates/Agent.cer"));
-        certificates.verify(agent, alice);
+        Certificate ca = certificates.getCert("TestCA");
+        certificates.verify(ca, agent);
     }
 
     @Test
     public void encryptAndDecryptKey() throws Exception {
         PublicKeyCrypto pkc = new PublicKeyCrypto();
         byte[] key = pkc.generateSharedKey();
-
-        String keyStore = "certificates/AliceKeyStore.jks";
-        String keyPass = "123456";
-        Certificates certificates = new Certificates(keyStore, keyPass);
+        Certificates certificates = new Certificates("certificates/AliceKeyStore.jks", "123456");
         Certificate alice = certificates.getCert("Alice");
         byte[] encrKey = pkc.encryptText(key, alice.getPublicKey());
         byte[] decrKey = pkc.decryptText(encrKey, certificates.getPrivateKey("alice", "123456"));

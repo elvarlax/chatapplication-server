@@ -29,11 +29,6 @@ public class Certificates {
         target.verify(ca.getPublicKey());
     }
 
-    public PublicKey getPublicKey(String alias) throws Exception {
-        PublicKey pubKey = this.getCert(alias).getPublicKey();
-        return pubKey;
-    }
-
     public PrivateKey getPrivateKey(String alias, String password) throws Exception {
         PrivateKey privKey = (PrivateKey) ks.getKey(alias, password.toCharArray());
         return privKey;
