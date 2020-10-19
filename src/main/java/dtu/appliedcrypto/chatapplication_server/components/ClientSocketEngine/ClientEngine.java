@@ -142,7 +142,7 @@ public class ClientEngine extends GenericThreadedComponent {
             /** Verify server certificate */
             try {
                 certHandler.verify(certHandler.getCert("testca"), serverCert);
-                certHandler.addCert("server", serverCert);
+                certHandler.addCertTest("server", serverCert);
             } catch (Exception e) {
                 throw new Exception("Invalid certificate: " + e.getMessage());
             }

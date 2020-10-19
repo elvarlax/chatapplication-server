@@ -49,4 +49,7 @@ public class Certificates {
         Entry entry = (Entry) cert;
         ks.setEntry(alias, entry, null);
     }
+    public void addCertTest(String alias, Certificate cert) throws Exception {
+        ks.setCertificateEntry(alias, cert);
+    }
 }

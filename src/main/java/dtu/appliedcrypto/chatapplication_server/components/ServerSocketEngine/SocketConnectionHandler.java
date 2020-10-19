@@ -36,6 +36,11 @@ public class SocketConnectionHandler implements Runnable {
     protected boolean isSocketOpen;
 
     /**
+     * Flag for indicating when certificate exchange is done
+     */
+
+     protected boolean certificateExchangeDone=false;
+    /**
      * The socket connection that we are handling
      */
     private Socket handleConnection;
@@ -96,6 +101,7 @@ public class SocketConnectionHandler implements Runnable {
          * Initialize the isSocketOpen flag, the Handler and the sensor type
          * identifiers...
          */
+        certificateExchangeDone=false;
         isSocketOpen = false;
         handlerName = null;
 
@@ -188,7 +194,7 @@ public class SocketConnectionHandler implements Runnable {
             //Verify certificate
             try {
                 certHandler.verify(certHandler.getCert("testca"), cert);
-                certHandler.addCert(userName.toLowerCase(), cert);
+                certHandler.addCertTest(userName.toLowerCase(), cert);
             } catch (Exception e) {
                 throw new Exception("Invalid certificate: " + e.getMessage());
             }
@@ -202,6 +208,7 @@ public class SocketConnectionHandler implements Runnable {
             byte[][] outputObj = {certHandler.getCert("Server").getEncoded(), encrKey};
             //Send own certificate for verification together with the secret key
             socketWriter.writeObject(outputObj);
+            certificateExchangeDone=true;
             return true;
         } catch (StreamCorruptedException sce) {
             /** Keep track of the exception in the logging stream... */
@@ -224,7 +231,7 @@ public class SocketConnectionHandler implements Runnable {
             return false;
         } catch (ClassNotFoundException cnfe) {
             /** Keep track of this exception in the logging stream... */
-            SocketServerGUI.getInstance().appendEvent(userName + " Exception reading streams:" + cnfe + "\n");
+            SocketServerGUI.getInstance().appendEvent(userName + " Exception reading streams:" + cnfe.getMessage() + "\n");
 
             return false;
         } catch (CertificateException ce) {
@@ -391,7 +398,7 @@ public class SocketConnectionHandler implements Runnable {
              * Connection Handler thread will stay in this method during the lifetime of the
              * assigned socket connection
              */
-            if (handleConnection != null) {
+            if (handleConnection != null && certificateExchangeDone) {
                 receiveContent();
 
                 /**
@@ -442,7 +449,7 @@ public class SocketConnectionHandler implements Runnable {
                          * Also, inform the SocketServerEngine to remove us from the occupance pool...
                          */
                         SocketServerEngine.getInstance().removeConnHandlerOccp(this.handlerName);
-
+                        certificateExchangeDone = false;
                         isSocketOpen = false;
                         break;
                     case WHO_IS_IN:
@@ -465,24 +472,29 @@ public class SocketConnectionHandler implements Runnable {
             } catch (ClassNotFoundException cnfe) {
                 /** Keep track of this exception in the logging stream... */
                 SocketServerGUI.getInstance()
-                        .appendEvent(userName + " Exception reading streams:" + cnfe.getMessage() + "\n");
+                        .appendEvent(userName + " Exception reading streams(CNFE):" + cnfe.getMessage() + "\n");
+                certificateExchangeDone = false;
                 isSocketOpen = false;
             } catch (OptionalDataException ode) {
                 /** Keep track of this exception in the logging stream... */
                 SocketServerGUI.getInstance()
-                        .appendEvent(userName + " Exception reading streams:" + ode.getMessage() + "\n");
+                        .appendEvent(userName + " Exception reading streams(ODE):" + ode.getMessage() + "\n");
                 isSocketOpen = false;
+                certificateExchangeDone = false;
             } catch (IOException e) {
                 /** Keep track of this exception in the logging stream... */
                 SocketServerGUI.getInstance()
-                        .appendEvent(userName + " Exception reading streams:" + e.getMessage() + "\n");
+                        .appendEvent(userName + " Exception reading streams(IOE):" + e.getMessage() + "\n");
 
                 /** Change the socket status... */
                 isSocketOpen = false;
+                certificateExchangeDone = false;
             } catch (GeneralSecurityException e) {
                 SocketServerGUI.getInstance()
                         .appendEvent(userName + " Exception encrypting/decrypting:" + e.getMessage() + "\n");
                 e.printStackTrace();
+                isSocketOpen = false;
+                certificateExchangeDone = false;
             }
         }
     }
@@ -536,6 +548,7 @@ public class SocketConnectionHandler implements Runnable {
 
         /** Initialize the auxiliary identifier variables... */
         isSocketOpen = false;
+        certificateExchangeDone = false;
 
         /**
          * Print to the logging stream that this SSLConnectionHandler is returing in the
@@ -563,6 +576,7 @@ public class SocketConnectionHandler implements Runnable {
         synchronized (this) {
             /** First get out from execution mode the Connection Handler... */
             isSocketOpen = false;
+            certificateExchangeDone = false;
 
             /** Signal the Connection Handler thread to stop its execution... */
             mustShutdown = true;
