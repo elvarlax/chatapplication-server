@@ -10,19 +10,12 @@ import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.IComponent;
 import dtu.appliedcrypto.chatapplication_server.exception.ComponentInitException;
 
-import java.awt.BorderLayout;
-import java.awt.GridLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
 
 /**
  * @author atgianne

@@ -10,7 +10,6 @@ import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 
 /**

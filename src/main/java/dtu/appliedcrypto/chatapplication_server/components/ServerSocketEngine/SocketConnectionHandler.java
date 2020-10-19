@@ -8,25 +8,17 @@ package dtu.appliedcrypto.chatapplication_server.components.ServerSocketEngine;
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
 import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
-import dtu.appliedcrypto.chatapplication_server.crypto.DiffieHellman;
 import dtu.appliedcrypto.chatapplication_server.crypto.PublicKeyCrypto;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OptionalDataException;
-import java.io.StreamCorruptedException;
-import java.math.BigInteger;
-import java.net.*;
+import java.io.*;
+import java.net.Socket;
+import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.GeneralSecurityException;
 import java.util.Vector;
 
 /**
@@ -192,20 +184,20 @@ public class SocketConnectionHandler implements Runnable {
             CertificateFactory cf = CertificateFactory.getInstance("X509");
             cert = cf.generateCertificate(new ByteArrayInputStream(incomingObj[1]));
             //Create a new instance of the certificate handler
-            Certificates certHandler = new Certificates(System.getProperty("user.dir")+"\\certificates\\ServerKeyStore.jks", "123456");
+            Certificates certHandler = new Certificates(System.getProperty("user.dir") + "\\certificates\\ServerKeyStore.jks", "123456");
             //Verify certificate
-            try{
+            try {
                 certHandler.verify(certHandler.getCert("testca"), cert);
                 certHandler.addCert(userName.toLowerCase(), cert);
-            } catch(Exception e){
-                throw new Exception("Invalid certificate: "+e.getMessage());
+            } catch (Exception e) {
+                throw new Exception("Invalid certificate: " + e.getMessage());
             }
             int port = handleConnection.getPort();
             SocketServerGUI.getInstance().appendEvent(userName + " just connected at port number: " + port + "\n");
             //Generate a symmetric key
             PublicKeyCrypto pkc = new PublicKeyCrypto();
             symmetricKey = pkc.generateSharedKey();
-            
+
             byte[] encrKey = pkc.encryptText(symmetricKey, cert.getPublicKey());
             byte[][] outputObj = {certHandler.getCert("Server").getEncoded(), encrKey};
             //Send own certificate for verification together with the secret key
@@ -235,27 +227,26 @@ public class SocketConnectionHandler implements Runnable {
             SocketServerGUI.getInstance().appendEvent(userName + " Exception reading streams:" + cnfe + "\n");
 
             return false;
-        } catch(CertificateException ce) {
-                        /** Keep track of the exception in the logging stream... */
-                        SocketServerGUI.getInstance()
-                        .appendEvent("[" + handlerName + "]:: Certificate excp during stream reader/writer init -- "
-                                + ce.getMessage() + " (" + connectionStat.getCurrentDate() + ")\n");
-    
-                /**
-                 * Notify the SocketServerEngine that we are about to die in order to create a
-                 * new SSLConnectionHandler in our place
-                 */
-                SocketServerEngine.getInstance().addConnectionHandlerToPool(handlerName);
-    
-                /** Notify the SocketServerEngine to remove us from the occupance pool... */
-                SocketServerEngine.getInstance().removeConnHandlerOccp(handlerName);
-    
-                /** Then shut down... */
-                this.stop();
-    
-                return false;
-        }
-         catch (OptionalDataException ode) {
+        } catch (CertificateException ce) {
+            /** Keep track of the exception in the logging stream... */
+            SocketServerGUI.getInstance()
+                    .appendEvent("[" + handlerName + "]:: Certificate excp during stream reader/writer init -- "
+                            + ce.getMessage() + " (" + connectionStat.getCurrentDate() + ")\n");
+
+            /**
+             * Notify the SocketServerEngine that we are about to die in order to create a
+             * new SSLConnectionHandler in our place
+             */
+            SocketServerEngine.getInstance().addConnectionHandlerToPool(handlerName);
+
+            /** Notify the SocketServerEngine to remove us from the occupance pool... */
+            SocketServerEngine.getInstance().removeConnHandlerOccp(handlerName);
+
+            /** Then shut down... */
+            this.stop();
+
+            return false;
+        } catch (OptionalDataException ode) {
             /** Keep track of the exception in the logging stream... */
             SocketServerGUI.getInstance()
                     .appendEvent("[" + handlerName + "]:: Optional data excp during stream reader/writer init -- "

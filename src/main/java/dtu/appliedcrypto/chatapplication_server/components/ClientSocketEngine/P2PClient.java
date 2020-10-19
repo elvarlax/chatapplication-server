@@ -9,30 +9,19 @@ import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
 import dtu.appliedcrypto.SocketActionMessages.ChatMessageType;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.GridLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
-
-import java.net.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author atgianne
  */
 public class P2PClient extends JFrame implements ActionListener {
@@ -48,7 +37,9 @@ public class P2PClient extends JFrame implements ActionListener {
     JButton Send, stopStart;
     JButton connectStop;
 
-    /** Client Socket and output stream... */
+    /**
+     * Client Socket and output stream...
+     */
     Socket socket = null;
     ObjectOutputStream sOutput;
 
@@ -184,7 +175,7 @@ public class P2PClient extends JFrame implements ActionListener {
     /**
      * Method that is invoked when a client wants to connect to the Socket Server
      * spawn from another client in order to initiate their P2P communication.
-     * 
+     *
      * @return TRUE if the connection was successful; FALSE otherwise
      */
     public boolean connect() {
@@ -224,7 +215,7 @@ public class P2PClient extends JFrame implements ActionListener {
      * Method that is invoked when we want do disconnect from a Socket Server (spawn
      * by another client); this, basically, reflects the stopping of a P2P
      * communication
-     * 
+     *
      * @return TRUE if the disconnect was successful; FALSE, otherwise
      */
     public boolean disconnect() {

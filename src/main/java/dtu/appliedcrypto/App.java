@@ -1,11 +1,10 @@
 package dtu.appliedcrypto;
 
-import java.io.IOException;
-import java.security.Security;
-
+import dtu.appliedcrypto.chatapplication_server.ChatApplicationServerEngine;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-import dtu.appliedcrypto.chatapplication_server.ChatApplicationServerEngine;
+import java.io.IOException;
+import java.security.Security;
 
 public class App {
     public static void SetupSecurity() {

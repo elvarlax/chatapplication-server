@@ -5,14 +5,13 @@
  */
 package dtu.appliedcrypto.chatapplication_server;
 
-import java.lang.reflect.Method;
-import java.util.LinkedList;
-
-import dtu.appliedcrypto.chatapplication_server.components.base.*;
+import dtu.appliedcrypto.chatapplication_server.components.base.IComponent;
 import dtu.appliedcrypto.chatapplication_server.exception.ComponentInitException;
 import dtu.appliedcrypto.chatapplication_server.exception.PropertyLoadException;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.LinkedList;
 
 /**
  * The component manager handles the starting and stopping of all system

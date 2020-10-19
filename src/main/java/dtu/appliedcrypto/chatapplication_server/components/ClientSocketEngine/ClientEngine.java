@@ -11,6 +11,7 @@ import dtu.appliedcrypto.chatapplication_server.ComponentManager;
 import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.GenericThreadedComponent;
+import dtu.appliedcrypto.chatapplication_server.components.base.IComponent;
 import dtu.appliedcrypto.chatapplication_server.crypto.PublicKeyCrypto;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
@@ -21,9 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.math.BigInteger;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
+import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
@@ -106,8 +105,7 @@ public class ClientEngine extends GenericThreadedComponent {
 
         /** Try and connect to the server... */
         try {
-            socket = new Socket(configManager.getValue("Server.Address"),
-                    configManager.getValueInt("Server.PortNumber"));
+            socket = new Socket(configManager.getValue("Server.Address"), configManager.getValueInt("Server.PortNumber"));
         } catch (Exception e) {
             display("Error connecting to the server:" + e.getMessage() + "\n");
             ClientSocketGUI.getInstance().loginFailed();
@@ -122,8 +120,6 @@ public class ClientEngine extends GenericThreadedComponent {
             /** Set up the stream reader/writer for this socket connection... */
             socketWriter = new ObjectOutputStream(socket.getOutputStream());
             socketReader = new ObjectInputStream(socket.getInputStream());
-
-           
         } catch (IOException ioe) {
             display("Exception creating new Input/Output Streams: " + ioe + "\n");
             ComponentManager.getInstance().fatalException(ioe);
@@ -132,30 +128,34 @@ public class ClientEngine extends GenericThreadedComponent {
         /** Send our username and certificate to the server... */
         try {
             id = configManager.getValue("Client.Username");
-            Certificates certHandler = new Certificates(System.getProperty("user.dir")+"\\certificates\\"+id+"KeyStore.jks", "123456");
+            Certificates certHandler = new Certificates(System.getProperty("user.dir") + "\\certificates\\" + id + "KeyStore.jks", "123456");
             CertificateFactory cf = CertificateFactory.getInstance("X509");
             Certificate ownCert = certHandler.getCert(id.toLowerCase());
             byte[][] outputObj = {id.getBytes(), ownCert.getEncoded()};
-            socketWriter.writeObject( outputObj );
-            /** Recieve the server certificate and symmetric key */
+            socketWriter.writeObject(outputObj);
+
+            /** Receive the server certificate and symmetric key */
             byte[][] inputObj = (byte[][]) socketReader.readObject();
-            
+
             Certificate serverCert = cf.generateCertificate(new ByteArrayInputStream(inputObj[0]));
+
             /** Verify server certificate */
-            try{
+            try {
                 certHandler.verify(certHandler.getCert("testca"), serverCert);
                 certHandler.addCert("server", serverCert);
-            } catch(Exception e){
-                throw new Exception("Invalid certificate: "+e.getMessage());
+            } catch (Exception e) {
+                throw new Exception("Invalid certificate: " + e.getMessage());
             }
+
             byte[] encrKey = inputObj[1];
             PublicKeyCrypto pkc = new PublicKeyCrypto();
             byte[] decrKey = pkc.decryptText(encrKey, certHandler.getPrivateKey(id.toLowerCase(), "123456"));
+
             /** Initialize the cipher with the key */
             cipher = SymmetricCipherUtility.getCipher(id, decrKey);
-             /** Start the ListeFromServer thread... */
-             new ListenFromServer(id, decrKey).start();
 
+            /** Start the ListenFromServer thread... */
+            new ListenFromServer(id, decrKey).start();
         } catch (IOException ioe) {
             display("Exception during login: " + ioe);
             shutdown();
@@ -169,7 +169,6 @@ public class ClientEngine extends GenericThreadedComponent {
             shutdown();
             ComponentManager.getInstance().fatalException(e);
         }
-
         super.initialize();
     }
 

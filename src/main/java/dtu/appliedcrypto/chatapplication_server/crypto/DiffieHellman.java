@@ -1,11 +1,11 @@
 package dtu.appliedcrypto.chatapplication_server.crypto;
 
+import org.bouncycastle.util.BigIntegers;
+
 import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
-
-import org.bouncycastle.util.BigIntegers;
+import java.security.SecureRandom;
 
 /**
  * Contains building blocks needed for Diffie-Hellman Key Exchange.
@@ -16,7 +16,7 @@ public class DiffieHellman {
      * The prime for standardized 2048-bit MODP Group.
      * (<a href="https://www.ietf.org/rfc/rfc3526.txt">RFC 3526</a>)
      * <p>
-     *
+     * <p>
      * Belongs to a group with id 14.
      */
     private static final String MODP_2048_PRIME_HEX = ("FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1"
@@ -29,7 +29,7 @@ public class DiffieHellman {
             + "670C354E 4ABC9804 F1746C08 CA18217C 32905E46 2E36CE3B"
             + "E39E772C 180E8603 9B2783A2 EC07A28F B5C55DF0 6F4C52C9"
             + "DE2BCBF6 95581718 3995497C EA956AE5 15D22618 98FA0510" + "15728E5A 8AACAA68 FFFFFFFF FFFFFFFF")
-                    .replaceAll("\\s", "");
+            .replaceAll("\\s", "");
 
     public static final BigInteger P = new BigInteger(MODP_2048_PRIME_HEX, 16);
     public static final BigInteger G = BigInteger.valueOf(2L);
@@ -49,7 +49,7 @@ public class DiffieHellman {
 
     /**
      * Computes a common secret key K such that K = | partiakKey^(secret) | mod p
-     * 
+     *
      * @param partialKey a value received from another entity
      * @param secret     own secret key
      * @return a common secret key hashed with sha-256
@@ -63,7 +63,7 @@ public class DiffieHellman {
 
     /**
      * Computes a partial key K such that K = | g^(secret) | mod p
-     * 
+     *
      * @param secret own secret key
      * @return a partial key
      */

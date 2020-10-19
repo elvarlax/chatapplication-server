@@ -75,7 +75,7 @@ public class ConfigManager implements IComponent {
      *
      * @param key The key to use for looking up the value
      * @return A string with the stored value OR an empty string if no such key
-     *         exists in the map
+     * exists in the map
      */
     public String getValue(String key) {
         synchronized (configValues) {

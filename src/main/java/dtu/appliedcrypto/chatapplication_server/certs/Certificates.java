@@ -11,10 +11,9 @@ import java.security.cert.CertificateFactory;
 
 public class Certificates {
     private static final String KeyStoreType = "JKS";
-    private final KeyStore ks;
-
     final String keyStore;
     final String keyStorePass;
+    private final KeyStore ks;
 
     public Certificates(String keyStore, String keyStorePass) throws Exception {
         this.keyStore = keyStore;

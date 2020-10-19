@@ -12,9 +12,11 @@ import dtu.appliedcrypto.chatapplication_server.exception.ComponentInitException
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
 import java.net.ServerSocket;
-import java.util.*;
-import java.net.*;
+import java.net.Socket;
+import java.net.SocketException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Vector;
 
 /**
  * @author atgianne

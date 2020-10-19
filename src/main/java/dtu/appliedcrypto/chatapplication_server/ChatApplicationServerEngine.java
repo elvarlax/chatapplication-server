@@ -139,7 +139,7 @@ public class ChatApplicationServerEngine {
      *
      * @param args The command line arguments given by the user
      * @return String holding the mode of operation; either running the Server or
-     *         the Client
+     * the Client
      */
     public static String getCommandLineArgPasswd(String[] args) {
         /** Auxiliary objects... */

@@ -1,25 +1,23 @@
 package dtu.appliedcrypto.chatapplication_server.crypto;
 
-import java.nio.charset.StandardCharsets;
-
-import java.security.GeneralSecurityException;
-import java.security.NoSuchAlgorithmException;
-import java.security.MessageDigest;
-
-import javax.crypto.spec.SecretKeySpec;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.SecretKey;
-import javax.crypto.Cipher;
-import java.math.BigInteger;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.Arrays;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class SymmetricCipher {
-    private final SecretKey secret;
     public final static int IV_LENGTH = 16;
     public final static String CIPHER_TYPE = "AES/CBC/PKCS7Padding";
+    private final SecretKey secret;
 
     /**
      * @param keyBytes some initial shared secret ("password")
@@ -38,13 +36,14 @@ public class SymmetricCipher {
     public SymmetricCipher(String key) throws NoSuchAlgorithmException {
         this(MessageDigest.getInstance("SHA256").digest(key.getBytes(StandardCharsets.UTF_8)));
     }
+
     public SymmetricCipher(BigInteger key) throws NoSuchAlgorithmException {
         this(MessageDigest.getInstance("SHA256").digest(key.toByteArray()));
     }
 
     /**
      * AES encrypt primitive (CBC mode with PKCS7 padding)
-     * 
+     *
      * @param key  some secret
      * @param data data to be encrypted
      * @return input vector and encrypted data as byte arrays
@@ -53,12 +52,12 @@ public class SymmetricCipher {
     private static byte[][] aesCbcEncrypt(SecretKey key, byte[] data) throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance(CIPHER_TYPE, BouncyCastleProvider.PROVIDER_NAME);
         cipher.init(Cipher.ENCRYPT_MODE, key);
-        return new byte[][] { cipher.getIV(), cipher.doFinal(data) };
+        return new byte[][]{cipher.getIV(), cipher.doFinal(data)};
     }
 
     /**
      * AES decrypt primitive (CBC mode with PKCS7 padding)
-     * 
+     *
      * @param key        some secret
      * @param iv         input vector
      * @param cipherText encrypted data
@@ -73,7 +72,7 @@ public class SymmetricCipher {
 
     /**
      * Stream Cipher encryption
-     * 
+     *
      * @param message a message to be encrypted
      * @return input vector and encrypted message as byte array
      * @throws GeneralSecurityException
@@ -85,7 +84,7 @@ public class SymmetricCipher {
 
     /**
      * Stream cipher decryption
-     * 
+     *
      * @param cipherText encrypted data
      * @return plain text
      * @throws GeneralSecurityException
