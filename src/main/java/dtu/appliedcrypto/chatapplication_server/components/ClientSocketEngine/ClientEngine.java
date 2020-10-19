@@ -65,6 +65,7 @@ public class ClientEngine extends GenericThreadedComponent {
 
     private String id;
     private SymmetricCipher cipher;
+    private Certificates certs;
 
     public String getId() {
         return id;
@@ -99,6 +100,23 @@ public class ClientEngine extends GenericThreadedComponent {
     public void initialize() throws ComponentInitException {
         /** Get the running instance of the Configuration Manager component */
         configManager = ConfigManager.getInstance();
+
+        String keyStoreFile = configManager.getValue("KeyStore.File");
+        String keyStoreSecret = configManager.getValue("KeyStore.Secret");
+        String caFile = configManager.getValue("KeyStore.CA");
+        String privateCertFile = configManager.getValue("KeyStore.Cert");
+        try {
+            if (caFile == null || privateCertFile == null) {
+                // just load key store with pre-stored CA and private certificate
+                certs = new Certificates(keyStoreFile, keyStoreSecret);
+            } else {
+                // load and store CA and private certificate
+                certs = new Certificates(keyStoreFile, keyStoreSecret, caFile, privateCertFile);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         /** For printing the configuration properties of the secure socket server */
         lotusStat = new ServerStatistics();
@@ -223,6 +241,9 @@ public class ClientEngine extends GenericThreadedComponent {
                 } else if (msg.equalsIgnoreCase("PRIVATEMESSAGE")) { // default to ordinary message
                     sendMessage(new ChatMessage(id, ChatMessageType.PRIVATE_MESSAGE, msg.getBytes()));
                 } else { // default to ordinary message
+                    if (cipher == null) {
+                        cipher = SymmetricCipherUtility.getCipher(id);
+                    }
                     byte[] cipherText = cipher.encrypt(msg);
                     sendMessage(new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipherText));
                 }
