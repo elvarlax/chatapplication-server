@@ -137,6 +137,16 @@ public class ClientEngine extends GenericThreadedComponent {
         /** Create the read/write object streams... */
         /** Send our username and certificate to the server... */
         try {
+            /** Set up the stream reader/writer for this socket connection... */
+            socketWriter = new ObjectOutputStream(socket.getOutputStream());
+            socketReader = new ObjectInputStream(socket.getInputStream());
+        } catch (IOException ioe) {
+            display("Exception creating new Input/Output Streams: " + ioe + "\n");
+            ComponentManager.getInstance().fatalException(ioe);
+        }
+
+        /** Send our username and certificate to the server... */
+        try {
             id = configManager.getValue("Client.Username");
             CertificateFactory cf = CertificateFactory.getInstance("X509");
 
