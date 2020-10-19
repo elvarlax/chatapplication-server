@@ -68,15 +68,29 @@ public class Certificates {
     fos.close();
   }
 
+  /**
+   * @return private certificate
+   * @throws GeneralSecurityException
+   */
   public Certificate getCert() throws GeneralSecurityException {
     return getCert(ALIAS_PRIVATE_CERT);
   }
 
+  /**
+   * @return certificate stored by given alias
+   * @param alias certificate togen
+   * @throws GeneralSecurityException
+   */
   public Certificate getCert(String alias) throws GeneralSecurityException {
     Certificate cert = store.getCertificate(alias);
     return cert;
   }
 
+  /**
+   * @return certificate from file
+   * @param file certificate file
+   * @throws GeneralSecurityException
+   */
   public Certificate getCert(FileInputStream file) throws GeneralSecurityException {
     CertificateFactory factory = CertificateFactory.getInstance("X.509");
     Certificate cert = factory.generateCertificate(file);
@@ -92,10 +106,11 @@ public class Certificates {
     PrivateKey privKey = (PrivateKey) store.getKey(ALIAS_PRIVATE_CERT, this.keyStorePass.toCharArray());
     return privKey;
   }
+
   public PrivateKey getPrivateKey(String alias, String password) throws Exception {
     PrivateKey privKey = (PrivateKey) store.getKey(alias, password.toCharArray());
     return privKey;
-}
+  }
 
   public void verify(Certificate target) throws GeneralSecurityException {
     Certificate ca = getCert(ALIAS_CA);

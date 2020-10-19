@@ -138,22 +138,24 @@ public class ClientEngine extends GenericThreadedComponent {
         /** Send our username and certificate to the server... */
         try {
             id = configManager.getValue("Client.Username");
-            Certificates certHandler = new Certificates(System.getProperty("user.dir") + "\\certificates\\" + id + "KeyStore.jks", "123456");
             CertificateFactory cf = CertificateFactory.getInstance("X509");
 
-            Certificate ownCert = certHandler.getCert(id.toLowerCase());
-            byte[][] outputObj = {id.getBytes(), ownCert.getEncoded()};
+            Certificate ownCert = certs.getCert();
+            byte[][] outputObj = { id.getBytes(), ownCert.getEncoded() };
             socketWriter.writeObject(outputObj);
 
-            /** Receive the input object: index 0 - certificate of the server, index 1 - encrypted symmetric key */
+            /**
+             * Receive the input object: index 0 - certificate of the server, index 1 -
+             * encrypted symmetric key
+             */
             byte[][] inputObj = (byte[][]) socketReader.readObject();
 
             Certificate serverCert = cf.generateCertificate(new ByteArrayInputStream(inputObj[0]));
 
             /** Verify server certificate */
             try {
-                certHandler.verify(certHandler.getCert("testca"), serverCert);
-                certHandler.addCert("server", serverCert);
+                certs.verify(serverCert);
+                certs.addCert("server", serverCert);
             } catch (Exception e) {
                 throw new Exception("Invalid certificate: " + e.getMessage());
             }
@@ -163,7 +165,7 @@ public class ClientEngine extends GenericThreadedComponent {
              */
             byte[] encrKey = inputObj[1];
             PublicKeyCrypto pkc = new PublicKeyCrypto();
-            byte[] decrKey = pkc.decryptText(encrKey, certHandler.getPrivateKey(id.toLowerCase(), "123456"));
+            byte[] decrKey = pkc.decryptText(encrKey, certs.getPrivateKey());
 
             /** Initialize the cipher with the key */
             cipher = SymmetricCipherUtility.getCipher(id, decrKey);
