@@ -8,6 +8,7 @@ package dtu.appliedcrypto.chatapplication_server.components.ClientSocketEngine;
 import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
 import dtu.appliedcrypto.SocketActionMessages.ChatMessageType;
 import dtu.appliedcrypto.chatapplication_server.ComponentManager;
+import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.GenericThreadedComponent;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
@@ -60,6 +61,7 @@ public class ClientEngine extends GenericThreadedComponent {
 
     private String id;
     private SymmetricCipher cipher;
+    private Certificates certs;
 
     public String getId() {
         return id;
@@ -95,6 +97,23 @@ public class ClientEngine extends GenericThreadedComponent {
         /** Get the running instance of the Configuration Manager component */
         configManager = ConfigManager.getInstance();
 
+        String keyStoreFile = configManager.getValue("KeyStore.File");
+        String keyStoreSecret = configManager.getValue("KeyStore.Secret");
+        String caFile = configManager.getValue("KeyStore.CA");
+        String privateCertFile = configManager.getValue("KeyStore.Cert");
+        try {
+            if (caFile == null || privateCertFile == null) {
+                // just load key store with pre-stored CA and private certificate
+                certs = new Certificates(keyStoreFile, keyStoreSecret);
+            } else {
+                // load and store CA and private certificate
+                certs = new Certificates(keyStoreFile, keyStoreSecret, caFile, privateCertFile);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
         /** For printing the configuration properties of the secure socket server */
         lotusStat = new ServerStatistics();
 
@@ -119,6 +138,7 @@ public class ClientEngine extends GenericThreadedComponent {
 
             /** Start the ListeFromServer thread... */
             id = configManager.getValue("Client.Username");
+
             new ListenFromServer(id).start();
         } catch (IOException ioe) {
             display("Exception creating new Input/Output Streams: " + ioe + "\n");
