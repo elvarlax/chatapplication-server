@@ -92,6 +92,10 @@ public class Certificates {
     PrivateKey privKey = (PrivateKey) store.getKey(ALIAS_PRIVATE_CERT, this.keyStorePass.toCharArray());
     return privKey;
   }
+  public PrivateKey getPrivateKey(String alias, String password) throws Exception {
+    PrivateKey privKey = (PrivateKey) store.getKey(alias, password.toCharArray());
+    return privKey;
+}
 
   public void verify(Certificate target) throws GeneralSecurityException {
     Certificate ca = getCert(ALIAS_CA);

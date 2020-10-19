@@ -18,10 +18,12 @@ import java.security.GeneralSecurityException;
 public class ListenFromServer extends Thread {
 
     private final String cipherId;
+    private final byte[] cipherKey;
 
-    public ListenFromServer(String id) {
+    public ListenFromServer(String id, byte[] key) {
         super();
         this.cipherId = id;
+        this.cipherKey = key;
     }
 
     public void run() {
@@ -31,7 +33,7 @@ public class ListenFromServer extends Thread {
             synchronized (sInput) {
                 try {
                     byte[] cipherText = (byte[]) sInput.readObject();
-                    String msg = SymmetricCipherUtility.getCipher(cipherId).decrypt(cipherText);
+                    String msg = SymmetricCipherUtility.getCipher(cipherId, cipherKey).decrypt(cipherText);
 
                     if (msg.contains("#")) {
                         ClientSocketGUI.getInstance().appendPrivateChat(msg + "\n");
