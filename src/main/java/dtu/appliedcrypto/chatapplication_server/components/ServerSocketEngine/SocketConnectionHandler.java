@@ -203,11 +203,13 @@ public class SocketConnectionHandler implements Runnable {
             //Generate a symmetric key
             PublicKeyCrypto pkc = new PublicKeyCrypto();
             symmetricKey = pkc.generateSharedKey();
-
             byte[] encrKey = pkc.encryptText(symmetricKey, cert.getPublicKey());
+
+            //Send own certificate for verification together with the encrypted symmetric key
             byte[][] outputObj = {certHandler.getCert("Server").getEncoded(), encrKey};
-            //Send own certificate for verification together with the secret key
             socketWriter.writeObject(outputObj);
+
+            //Mark certificate exchange flag true so that the server can listen for incoming objects
             certificateExchangeDone=true;
             return true;
         } catch (StreamCorruptedException sce) {

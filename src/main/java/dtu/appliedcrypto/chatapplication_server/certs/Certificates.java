@@ -13,6 +13,13 @@ public class Certificates {
     final String keyStorePass;
     private final KeyStore ks;
 
+    /**
+     * Constructor for the Certificate class.
+     * Loads in the keystore with the provided password
+     * @param keyStore - Path to the keystore
+     * @param keyStorePass - Password of the keystore
+     * @throws Exception
+     */
     public Certificates(String keyStore, String keyStorePass) throws Exception {
         this.keyStore = keyStore;
         this.keyStorePass = keyStorePass;
@@ -23,26 +30,57 @@ public class Certificates {
         ks.load(ksbufin, keyStorePass.toCharArray());
     }
 
+    /**
+     * Verifies the target certificate against the CA certificate
+     * @param ca 
+     * @param target 
+     * @throws Exception
+     */
     public void verify(Certificate ca, Certificate target) throws Exception {
         target.verify(ca.getPublicKey());
     }
 
+    /**
+     * Retrieves the private key with the given password
+     * @param alias
+     * @param password
+     * @return
+     * @throws Exception
+     */
     public PrivateKey getPrivateKey(String alias, String password) throws Exception {
         PrivateKey privKey = (PrivateKey) ks.getKey(alias, password.toCharArray());
         return privKey;
     }
 
+    /**
+     * Retrieves certificate based on the alias
+     * @param alias
+     * @return
+     * @throws Exception
+     */
     public Certificate getCert(String alias) throws Exception {
         Certificate cert = ks.getCertificate(alias);
         return cert;
     }
 
+    /**
+     * Retrieves certificate based on the FileInputStream
+     * @param file
+     * @return
+     * @throws Exception
+     */
     public Certificate getCert(FileInputStream file) throws Exception {
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         Certificate cert = factory.generateCertificate(file);
         return cert;
     }
 
+    /**
+     * Adds a certificate to the keystore
+     * @param alias
+     * @param cert
+     * @throws Exception
+     */
     public void addCert(String alias, Certificate cert) throws Exception {
         ks.setCertificateEntry(alias, cert);
     }

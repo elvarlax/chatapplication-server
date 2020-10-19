@@ -30,10 +30,19 @@ public class PublicKeyCrypto {
     private static final SecureRandom RND = new SecureRandom();
 
 
+    /**
+     * Constructor for the PublicKeyCrypto class. Initializes the cipher
+     * @throws Exception
+     */
     public PublicKeyCrypto() throws Exception {
         this.cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
     }
 
+    /**
+     * Generates a shared key that is hashed using SHA-256
+     * @return symmetric key
+     * @throws Exception
+     */
     public byte[] generateSharedKey() throws Exception {
         BigInteger one = BigInteger.valueOf(1);
         BigInteger initKey = BigIntegers.createRandomInRange(one, P.subtract(one), RND);
@@ -42,11 +51,25 @@ public class PublicKeyCrypto {
         return key;
     }
 
+    /**
+     * Encrypts a byte array using the public key
+     * @param msg
+     * @param key
+     * @return Base64 encoded encrypted byte array
+     * @throws Exception
+     */
     public byte[] encryptText(byte[] msg, PublicKey key) throws Exception {
         this.cipher.init(Cipher.ENCRYPT_MODE, key);
         return Base64.getEncoder().encode(cipher.doFinal(msg));
     }
 
+    /**
+     * Decrypts a byte array using the private key
+     * @param msg
+     * @param key
+     * @return Decrypted byte array
+     * @throws Exception
+     */
     public byte[] decryptText(byte[] msg, PrivateKey key) throws Exception {
         this.cipher.init(Cipher.DECRYPT_MODE, key);
         return cipher.doFinal(Base64.getDecoder().decode(msg));
