@@ -4,6 +4,7 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
 
 import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
@@ -14,23 +15,36 @@ import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 public class AppTest {
 
     @Test
-    public void shouldLoadKeyStore() throws Exception {
-        String keyStore = "certificates/Alice.jks";
+    public void shouldLoadTestCerts() throws Exception {
+        // arrange
+        String keyStore = "keystores/Test.jks";
         String keyPass = "123456";
+
+        // act
         Certificates certs = new Certificates(keyStore, keyPass);
-        assertNotNull(certs);
+        Certificate ca = certs.getCert(Certificates.ALIAS_CA);
+        Certificate privateCert = certs.getCert(Certificates.ALIAS_PRIVATE_CERT);
+        PrivateKey privateKey = certs.getPrivateKey();
+
+        // assert
+        assertNotNull(ca);
+        assertNotNull(privateCert);
+        assertNotNull(privateKey);
     }
 
     @Test
-    public void shouldLoadAlicesCerts() throws Exception {
-        String keyStore = "certificates/Alice.jks";
+    public void shouldValidateSignedCert() throws Exception {
+        // arrange
+        String keyStore = "keystores/Test.jks";
         String keyPass = "123456";
+
+        // act
         Certificates certs = new Certificates(keyStore, keyPass);
-        Certificate cert = certs.getCert("Alice");
+        Certificate ca = certs.getCert(Certificates.ALIAS_CA);
+        Certificate privateCert = certs.getCert(Certificates.ALIAS_PRIVATE_CERT);
 
-        assertNotNull(cert);
-
-        cert = certs.getCert("testca");
-        assertNotNull(cert);
+        // assert
+        certs.verify(ca, privateCert);
+        certs.verify(privateCert);
     }
 }

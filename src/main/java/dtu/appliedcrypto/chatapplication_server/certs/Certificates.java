@@ -13,9 +13,8 @@ import java.security.cert.CertificateFactory;
 public class Certificates {
 
   private static final String KEY_STORE_TYPE = "JKS";
-  private static final String CA_TOKEN = "CA";
-  private static final String CERT_TOKEN = "CERT";
-  private static final String SECRET_KEY_TOKEN = "SECRET";
+  public static final String ALIAS_CA = "CA";
+  public static final String ALIAS_PRIVATE_CERT = "PRIVATE";
 
   private final KeyStore store;
   final String keyStorePass;
@@ -33,7 +32,7 @@ public class Certificates {
       store.store(new FileOutputStream(this.keyStoreFile), this.keyStorePass.toCharArray());
     }
 
-    if (getCert(CA_TOKEN) == null || getCert(CERT_TOKEN) == null) {
+    if (getCert(ALIAS_CA) == null || getCert(ALIAS_PRIVATE_CERT) == null) {
       throw new Exception("KeyStore shoul already have CA and CERT stored");
     }
   }
@@ -50,10 +49,10 @@ public class Certificates {
     }
 
     // store CA certificate
-    addCert(CA_TOKEN, getCert(new FileInputStream(caFile)));
+    addCert(ALIAS_CA, getCert(new FileInputStream(caFile)));
 
     // store personal certificate
-    addCert(CERT_TOKEN, getCert(new FileInputStream(certFile)));
+    addCert(ALIAS_PRIVATE_CERT, getCert(new FileInputStream(certFile)));
   }
 
   public void addCert(String alias, Certificate cert) throws Exception {
@@ -81,13 +80,13 @@ public class Certificates {
     return pubKey;
   }
 
-  public PrivateKey getPrivateKey(String password) throws Exception {
-    PrivateKey privKey = (PrivateKey) store.getKey(SECRET_KEY_TOKEN, password.toCharArray());
+  public PrivateKey getPrivateKey() throws Exception {
+    PrivateKey privKey = (PrivateKey) store.getKey(ALIAS_PRIVATE_CERT, this.keyStorePass.toCharArray());
     return privKey;
   }
 
   public void verify(Certificate target) throws Exception {
-    Certificate ca = getCert(CA_TOKEN);
+    Certificate ca = getCert(ALIAS_CA);
     verify(ca, target);
   }
 

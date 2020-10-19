@@ -26,3 +26,9 @@ $ java -jar ./dist/chat-application.jar Mode=Client
 # to run as a server
 $ java -jar ./dist/chat-application.jar Mode=Server
 ```
+
+## Rest
+
+password for test.jks: 123456
+password for ca_key.pem: Scb1kNjPb46KzRESq6Dl
+root cert challenge pass: Ercx9rPBtmQWbnp9lqsG
