@@ -17,10 +17,10 @@ import static org.junit.Assert.assertTrue;
  */
 public class AppTest {
     /**
-     * Verify certificate that it works
+     * Verify certificate successfully
      */
     @Test
-    public void verifyCertificateThatWorks() throws Exception {
+    public void verifyCertificateSuccessfully() throws Exception {
         Certificates certificates = new Certificates("certificates/AliceKeyStore.jks", "123456");
         Certificate alice = certificates.getCert("Alice");
         Certificate ca = certificates.getCert("TestCA");
@@ -28,10 +28,10 @@ public class AppTest {
     }
 
     /**
-     * Verify certificate that it does not work
+     * Verify certificate unsuccessfully
      */
     @Test(expected = SignatureException.class)
-    public void verifyCertificateNotWorks() throws Exception {
+    public void verifyCertificateUnsuccessfully() throws Exception {
         Certificates certificates = new Certificates("certificates/AliceKeyStore.jks", "123456");
         Certificate agent = certificates.getCert(new FileInputStream("certificates/Agent.cer"));
         Certificate ca = certificates.getCert("TestCA");
