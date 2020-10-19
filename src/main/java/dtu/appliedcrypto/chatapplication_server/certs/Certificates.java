@@ -3,9 +3,7 @@ package dtu.appliedcrypto.chatapplication_server.certs;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.security.KeyStore;
-import java.security.KeyStore.Entry;
 import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 
@@ -46,10 +44,6 @@ public class Certificates {
     }
 
     public void addCert(String alias, Certificate cert) throws Exception {
-        Entry entry = (Entry) cert;
-        ks.setEntry(alias, entry, null);
-    }
-    public void addCertTest(String alias, Certificate cert) throws Exception {
         ks.setCertificateEntry(alias, cert);
     }
 }

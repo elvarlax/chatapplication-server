@@ -7,10 +7,8 @@ import org.junit.Test;
 import java.io.FileInputStream;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
-import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertArrayEquals;
 
 /**
  * Unit test for simple App.
@@ -46,6 +44,6 @@ public class AppTest {
         Certificate alice = certificates.getCert("Alice");
         byte[] encrKey = pkc.encryptText(key, alice.getPublicKey());
         byte[] decrKey = pkc.decryptText(encrKey, certificates.getPrivateKey("alice", "123456"));
-        assertTrue(Arrays.equals(decrKey, key));
+        assertArrayEquals(decrKey, key);
     }
 }

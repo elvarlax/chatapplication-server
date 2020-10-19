@@ -194,7 +194,7 @@ public class SocketConnectionHandler implements Runnable {
             //Verify certificate
             try {
                 certHandler.verify(certHandler.getCert("testca"), cert);
-                certHandler.addCertTest(userName.toLowerCase(), cert);
+                certHandler.addCert(userName.toLowerCase(), cert);
             } catch (Exception e) {
                 throw new Exception("Invalid certificate: " + e.getMessage());
             }
