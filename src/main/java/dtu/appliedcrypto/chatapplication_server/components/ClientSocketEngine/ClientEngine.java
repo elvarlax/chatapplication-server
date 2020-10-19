@@ -11,6 +11,7 @@ import dtu.appliedcrypto.chatapplication_server.ComponentManager;
 import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.GenericThreadedComponent;
+import dtu.appliedcrypto.chatapplication_server.crypto.PublicKeyCrypto;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
 import dtu.appliedcrypto.chatapplication_server.exception.ComponentInitException;
@@ -22,6 +23,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
@@ -146,7 +148,10 @@ public class ClientEngine extends GenericThreadedComponent {
             } catch(Exception e){
                 throw new Exception("Invalid certificate: "+e.getMessage());
             }
-            BigInteger key = new BigInteger(inputObj[1]);
+            String encrKey = new String(inputObj[1], StandardCharsets.UTF_8);
+            PublicKeyCrypto pkc = new PublicKeyCrypto();
+            String decrKey = pkc.decryptText(encrKey, certHandler.getPrivateKey(id.toLowerCase(), "123456"));
+            BigInteger key = new BigInteger(decrKey);
             /** Initialize the cipher with the key */
             cipher = SymmetricCipherUtility.getCipher(id, key);
              /** Start the ListeFromServer thread... */

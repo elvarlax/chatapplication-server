@@ -9,6 +9,7 @@ import dtu.appliedcrypto.SocketActionMessages.ChatMessage;
 import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.crypto.DiffieHellman;
+import dtu.appliedcrypto.chatapplication_server.crypto.PublicKeyCrypto;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
@@ -203,7 +204,9 @@ public class SocketConnectionHandler implements Runnable {
             SocketServerGUI.getInstance().appendEvent(userName + " just connected at port number: " + port + "\n");
             //Generate a symmetric key
             symmetricKey = DiffieHellman.generateRandomSecret();
-            byte[][] outputObj = {certHandler.getCert("Server").getEncoded(), symmetricKey.toByteArray()};
+            PublicKeyCrypto pkc = new PublicKeyCrypto();
+            String encrKey = pkc.encryptText(symmetricKey.toString(), cert.getPublicKey());
+            byte[][] outputObj = {certHandler.getCert("Server").getEncoded(), encrKey.getBytes()};
             //Send own certificate for verification together with the secret key
             socketWriter.writeObject(outputObj);
             return true;
