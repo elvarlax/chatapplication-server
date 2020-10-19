@@ -18,14 +18,11 @@ public class App {
         String mode = ChatApplicationServerEngine.getCommandLineArgPasswd(args, "mode");
         String prop = ChatApplicationServerEngine.getCommandLineArgPasswd(args, "props", "chatapplication.properties");
 
-        System.out.println(args[0]);
-        System.out.println(mode);
+        System.out.println("Mode=" + mode);
+        System.out.println("Props=" + prop);
+
         config.setValue("Mode", mode);
-
-        System.out.println(args[1]);
-        System.out.println(prop);
         config.setValue("PropertiesFile.Folder", prop);
-
         return config;
     }
 

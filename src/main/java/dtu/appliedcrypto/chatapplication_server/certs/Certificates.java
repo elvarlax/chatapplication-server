@@ -33,7 +33,7 @@ public class Certificates {
     }
 
     if (getCert(ALIAS_CA) == null || getCert(ALIAS_PRIVATE_CERT) == null) {
-      throw new Exception("KeyStore shoul already have CA and CERT stored");
+      throw new Exception("KeyStore should already have CA and CERT stored");
     }
   }
 
