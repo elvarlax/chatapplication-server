@@ -148,14 +148,13 @@ public class ClientEngine extends GenericThreadedComponent {
             } catch(Exception e){
                 throw new Exception("Invalid certificate: "+e.getMessage());
             }
-            String encrKey = new String(inputObj[1], StandardCharsets.UTF_8);
+            byte[] encrKey = inputObj[1];
             PublicKeyCrypto pkc = new PublicKeyCrypto();
-            String decrKey = pkc.decryptText(encrKey, certHandler.getPrivateKey(id.toLowerCase(), "123456"));
-            BigInteger key = new BigInteger(decrKey);
+            byte[] decrKey = pkc.decryptText(encrKey, certHandler.getPrivateKey(id.toLowerCase(), "123456"));
             /** Initialize the cipher with the key */
-            cipher = SymmetricCipherUtility.getCipher(id, key);
+            cipher = SymmetricCipherUtility.getCipher(id, decrKey);
              /** Start the ListeFromServer thread... */
-             new ListenFromServer(id, key).start();
+             new ListenFromServer(id, decrKey).start();
 
         } catch (IOException ioe) {
             display("Exception during login: " + ioe);

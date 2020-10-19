@@ -19,9 +19,9 @@ import java.security.GeneralSecurityException;
 public class ListenFromServer extends Thread {
 
     private final String cipherId;
-    private final BigInteger cipherKey;
+    private final byte[] cipherKey;
 
-    public ListenFromServer(String id, BigInteger key) {
+    public ListenFromServer(String id, byte[] key) {
         super();
         this.cipherId = id;
         this.cipherKey = key;

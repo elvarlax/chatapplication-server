@@ -62,7 +62,7 @@ public class SocketConnectionHandler implements Runnable {
     /**
      * The symmetric key of the client
      */
-    private BigInteger symmetricKey;
+    private byte[] symmetricKey;
 
     /**
      * The only type of message that we will receive
@@ -203,10 +203,11 @@ public class SocketConnectionHandler implements Runnable {
             int port = handleConnection.getPort();
             SocketServerGUI.getInstance().appendEvent(userName + " just connected at port number: " + port + "\n");
             //Generate a symmetric key
-            symmetricKey = DiffieHellman.generateRandomSecret();
             PublicKeyCrypto pkc = new PublicKeyCrypto();
-            String encrKey = pkc.encryptText(symmetricKey.toString(), cert.getPublicKey());
-            byte[][] outputObj = {certHandler.getCert("Server").getEncoded(), encrKey.getBytes()};
+            symmetricKey = pkc.generateSharedKey();
+            
+            byte[] encrKey = pkc.encryptText(symmetricKey, cert.getPublicKey());
+            byte[][] outputObj = {certHandler.getCert("Server").getEncoded(), encrKey};
             //Send own certificate for verification together with the secret key
             socketWriter.writeObject(outputObj);
             return true;

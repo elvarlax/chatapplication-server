@@ -1,7 +1,13 @@
 package dtu.appliedcrypto;
 
 import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
+import dtu.appliedcrypto.chatapplication_server.crypto.DiffieHellman;
+import dtu.appliedcrypto.chatapplication_server.crypto.PublicKeyCrypto;
+
+import java.math.BigInteger;
 import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
 
 import java.io.FileInputStream;
 import java.security.SignatureException;
@@ -35,5 +41,21 @@ public class AppTest {
         Certificate alice = certificates.getCert("Alice");
         Certificate agent = certificates.getCert(new FileInputStream("certificates/Agent.cer"));
         certificates.verify(agent, alice);
+    }
+
+    @Test
+    public void encryptAndDecryptKey() throws Exception {
+        PublicKeyCrypto pkc = new PublicKeyCrypto();
+        byte[] key = pkc.generateSharedKey();
+        
+        String keyStore = "certificates/AliceKeyStore.jks";
+        String keyStoreServer = "certificates/ServerKeyStore.jks";
+        String keyPass = "123456";
+        Certificates certificates = new Certificates(keyStore, keyPass);
+        Certificates certificatesServer = new Certificates(keyStoreServer, keyPass);
+        Certificate alice = certificates.getCert("Alice");
+        byte[] encrKey = pkc.encryptText(key, alice.getPublicKey());
+        byte[] decrKey = pkc.decryptText(encrKey, certificatesServer.getPrivateKey("server", "123456"));
+        assertTrue(decrKey == key);
     }
 }

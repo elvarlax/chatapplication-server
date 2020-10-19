@@ -24,7 +24,7 @@ public class SymmetricCipherUtility {
     }
     return cipherMap.get(id);
   }
-  public static SymmetricCipher getCipher(String id, BigInteger key) throws GeneralSecurityException {
+  public static SymmetricCipher getCipher(String id, byte[] key) throws GeneralSecurityException {
     if (!cipherMap.containsKey(id)) {
       cipherMap.put(id, new SymmetricCipher(key));
     }
