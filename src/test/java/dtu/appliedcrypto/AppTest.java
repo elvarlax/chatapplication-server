@@ -4,7 +4,9 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 
+import java.io.FileInputStream;
 import java.security.PrivateKey;
+import java.security.SignatureException;
 import java.security.cert.Certificate;
 
 import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
@@ -46,5 +48,21 @@ public class AppTest {
         // assert
         certs.verify(ca, privateCert);
         certs.verify(privateCert);
+    }
+
+    @Test(expected = SignatureException.class)
+    public void shouldInValidateSelfSignedCert() throws Exception {
+        // arrange
+        String keyStore = "keystores/Test.jks";
+        String keyPass = "123456";
+        String selfSignedCert = "certificates/alice_selfsigned.cer";
+
+        // act
+        Certificates certs = new Certificates(keyStore, keyPass);
+        Certificate selfSigned = certs.getCert(new FileInputStream(selfSignedCert));
+
+        // assert
+        assertNotNull(selfSigned);
+        certs.verify(selfSigned);
     }
 }

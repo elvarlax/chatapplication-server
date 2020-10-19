@@ -82,26 +82,45 @@ public class P2PClient extends JFrame implements ActionListener {
      */
     boolean isConnected;
 
-    private final BigInteger secret;
+    private final BigInteger dhSecret;
     private Map<String, DHState> dhStates;
+    private Certificates certs;
+
     private Map<String, SymmetricCipher> ciphers;
     private Map<String, Queue<String>> messageBuffer;
     // private final Certificates cetrificates;
 
-    P2PClient(String userName) {
+    P2PClient() {
         super("P2P Client Chat");
 
-        alias = userName;
+        ConfigManager config = ConfigManager.getInstance();
 
-        secret = DiffieHellman.generateRandomSecret();
+        host = config.getValue("Server.Address");
+        port = config.getValue("Server.PortNumber");
+
+        String keyStoreFile = config.getValue("KeyStore.File");
+        String keyStoreSecret = config.getValue("KeyStore.Secret");
+        String caFile = config.getValue("KeyStore.CA");
+        String privateCertFile = config.getValue("KeyStore.Cert");
+        try {
+            if (caFile == null || privateCertFile == null) {
+                // just load key store with pre-stored CA and private certificate
+                certs = new Certificates(keyStoreFile, keyStoreSecret);
+            } else {
+                // load and store CA and private certificate
+                certs = new Certificates(keyStoreFile, keyStoreSecret, caFile, privateCertFile);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        dhSecret = DiffieHellman.generateRandomSecret();
         // cetrificates = new Certificates(alias, "");
 
         ciphers = new HashMap<String, SymmetricCipher>();
         dhStates = new HashMap<String, DHState>();
         messageBuffer = new HashMap<String, Queue<String>>();
-
-        host = ConfigManager.getInstance().getValue("Server.Address");
-        port = ConfigManager.getInstance().getValue("Server.PortNumber");
 
         // The NorthPanel with:
         JPanel northPanel = new JPanel(new GridLayout(3, 1));

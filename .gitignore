@@ -285,3 +285,7 @@ $RECYCLE.BIN/
 
 # key stores
 *.jks
+
+# keytools & openssl stuff
+*.csr 
+serial.txt
