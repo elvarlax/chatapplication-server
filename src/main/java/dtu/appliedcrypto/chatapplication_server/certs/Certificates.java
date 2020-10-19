@@ -1,10 +1,14 @@
 package dtu.appliedcrypto.chatapplication_server.certs;
 
+import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.PublicKey;
 import java.security.PrivateKey;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.security.cert.Certificate;
@@ -55,7 +59,7 @@ public class Certificates {
     addCert(ALIAS_PRIVATE_CERT, getCert(new FileInputStream(certFile)));
   }
 
-  public void addCert(String alias, Certificate cert) throws Exception {
+  public void addCert(String alias, Certificate cert) throws IOException, GeneralSecurityException {
     store.setCertificateEntry(alias, cert);
 
     // store changes
@@ -64,12 +68,16 @@ public class Certificates {
     fos.close();
   }
 
-  public Certificate getCert(String alias) throws Exception {
+  public Certificate getCert() throws GeneralSecurityException {
+    return getCert(ALIAS_PRIVATE_CERT);
+  }
+
+  public Certificate getCert(String alias) throws GeneralSecurityException {
     Certificate cert = store.getCertificate(alias);
     return cert;
   }
 
-  public Certificate getCert(FileInputStream file) throws Exception {
+  public Certificate getCert(FileInputStream file) throws GeneralSecurityException {
     CertificateFactory factory = CertificateFactory.getInstance("X.509");
     Certificate cert = factory.generateCertificate(file);
     return cert;
@@ -80,17 +88,17 @@ public class Certificates {
     return pubKey;
   }
 
-  public PrivateKey getPrivateKey() throws Exception {
+  public PrivateKey getPrivateKey() throws GeneralSecurityException {
     PrivateKey privKey = (PrivateKey) store.getKey(ALIAS_PRIVATE_CERT, this.keyStorePass.toCharArray());
     return privKey;
   }
 
-  public void verify(Certificate target) throws Exception {
+  public void verify(Certificate target) throws GeneralSecurityException {
     Certificate ca = getCert(ALIAS_CA);
     verify(ca, target);
   }
 
-  public void verify(Certificate ca, Certificate target) throws Exception {
+  public void verify(Certificate ca, Certificate target) throws GeneralSecurityException {
     target.verify(ca.getPublicKey());
   }
 }

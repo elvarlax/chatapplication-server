@@ -6,6 +6,9 @@
 package dtu.appliedcrypto.SocketActionMessages;
 
 import java.io.Serializable;
+import java.security.cert.Certificate;
+
+import org.apache.commons.lang3.SerializationUtils;
 
 /**
  * This class defines the different type of messages that will be exchanged
@@ -49,6 +52,12 @@ public class ChatMessage implements Serializable {
         this.type = type;
         this.id = id;
         this.message = null;
+    }
+
+    public ChatMessage(String id, ChatMessageType type, Certificate message) {
+        this.type = type;
+        this.id = id;
+        this.message = SerializationUtils.serialize(message);
     }
 
     // getters

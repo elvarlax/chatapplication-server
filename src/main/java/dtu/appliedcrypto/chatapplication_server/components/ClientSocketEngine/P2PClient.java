@@ -11,6 +11,7 @@ import dtu.appliedcrypto.chatapplication_server.certs.Certificates;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.crypto.DHState;
 import dtu.appliedcrypto.chatapplication_server.crypto.DiffieHellman;
+import dtu.appliedcrypto.chatapplication_server.crypto.RSACipher;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
 
 import java.awt.BorderLayout;
@@ -33,7 +34,12 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
+import org.apache.commons.lang3.SerializationUtils;
+
 import java.net.*;
+import java.security.GeneralSecurityException;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,7 +60,8 @@ public class P2PClient extends JFrame implements ActionListener {
 
     private String host;
     private String port;
-    private String alias;
+    private String id;
+    private String senderId;
 
     private final JTextField tfServer;
     private final JTextField tfPort;
@@ -83,12 +90,11 @@ public class P2PClient extends JFrame implements ActionListener {
     boolean isConnected;
 
     private final BigInteger dhSecret;
-    private Map<String, DHState> dhStates;
     private Certificates certs;
 
     private Map<String, SymmetricCipher> ciphers;
     private Map<String, Queue<String>> messageBuffer;
-    // private final Certificates cetrificates;
+    private Map<String, DHState> dhStates;
 
     P2PClient() {
         super("P2P Client Chat");
@@ -119,8 +125,8 @@ public class P2PClient extends JFrame implements ActionListener {
         // cetrificates = new Certificates(alias, "");
 
         ciphers = new HashMap<String, SymmetricCipher>();
-        dhStates = new HashMap<String, DHState>();
         messageBuffer = new HashMap<String, Queue<String>>();
+        dhStates = new HashMap<String, DHState>();
 
         // The NorthPanel with:
         JPanel northPanel = new JPanel(new GridLayout(3, 1));
@@ -254,7 +260,8 @@ public class P2PClient extends JFrame implements ActionListener {
         /* Try to connect to the Socket Server... */
         try {
             if (isConnected == false) {
-                socket = new Socket(tfServer.getText(), Integer.parseInt(tfPort.getText()));
+                senderId = tfPort.getText();
+                socket = new Socket(tfServer.getText(), Integer.parseInt(senderId));
 
                 sOutput = new ObjectOutputStream(socket.getOutputStream());
                 isConnected = true;
@@ -320,19 +327,36 @@ public class P2PClient extends JFrame implements ActionListener {
         return true;
     }
 
-    public boolean send(String str) {
+    public boolean send(String message) {
         try {
-            byte[] message = str.getBytes();
-            sOutput.writeObject(new ChatMessage("", ChatMessageType.SECRET_MESSAGE, message));
-            display("You: " + str);
-            // sOutput.close();
-            // socket.close();
+            ChatMessage payload;
+
+            switch (dhStates.getOrDefault(senderId, DHState.CERT_EXCHANGE_NOT_INITIALIZED)) {
+                case KEY_ESTABLISHED:
+                    SymmetricCipher cipher = ciphers.get(senderId);
+                    byte[] cipherText = cipher.encrypt(message);
+                    payload = new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipherText);
+                    sOutput.writeObject(payload);
+                    display("You: " + message);
+                    break;
+                case CERT_EXCHANGE_NOT_INITIALIZED:
+                    // initialize key exchange
+                    payload = new ChatMessage(id, ChatMessageType.INIT_CERT_EXCHANGE, certs.getCert());
+                    sOutput.writeObject(payload);
+                    dhStates.put(senderId, DHState.CERT_EXCHANGE_INITIALIZED);
+                default:
+                    // enqueue messages
+                    Queue<String> buffer = getBuffer(senderId);
+                    buffer.add(message);
+                    break;
+            }
         } catch (IOException ex) {
             display("The Client's Server Socket was closed!!\nException creating output stream: " + ex.getMessage());
             this.disconnect();
             return false;
+        } catch (GeneralSecurityException ex) {
+            display("Encryption exception: " + ex);
         }
-
         return true;
     }
 
@@ -356,9 +380,91 @@ public class P2PClient extends JFrame implements ActionListener {
             while (keepGoing) {
                 try {
                     ChatMessage message = (ChatMessage) sInput.readObject();
-                    String msg = new String(message.getMessage());
-                    System.out.println("Msg:" + msg);
-                    display(socket.getInetAddress() + ": " + socket.getPort() + ": " + msg);
+                    String senderId = message.getId();
+                    Certificate senderCert;
+                    SymmetricCipher cipher;
+                    ChatMessage payload;
+                    String plainText;
+                    byte[] A, B, K;
+
+                    switch (message.getType()) {
+                        case INIT_CERT_EXCHANGE:
+                            // verify sender
+                            senderCert = (Certificate) SerializationUtils.deserialize(message.getMessage());
+                            certs.verify(senderCert);
+                            certs.addCert(senderId, senderCert);
+
+                            // respond with my certificate
+                            payload = new ChatMessage(id, ChatMessageType.CONFIRM_CERT_EXCHANGE, certs.getCert());
+                            send(senderId, payload);
+
+                            // update state
+                            dhStates.put(senderId, DHState.CERT_EXCHANGE_INITIALIZED);
+                            break;
+                        case CONFIRM_CERT_EXCHANGE:
+                            // verify sender
+                            senderCert = (Certificate) SerializationUtils.deserialize(message.getMessage());
+                            certs.verify(senderCert);
+                            certs.addCert(senderId, senderCert);
+
+                            // send him A encrypted by his public key
+                            A = DiffieHellman.getPartialKey(dhSecret).toByteArray();
+                            A = RSACipher.encrypt(senderCert.getPublicKey(), A);
+                            payload = new ChatMessage(id, ChatMessageType.INIT_KEY_EXCHANGE, A);
+                            send(senderId, payload);
+
+                            // update state
+                            dhStates.put(senderId, DHState.KEY_EXCHANGE_INITIALIZED);
+                            break;
+                        case INIT_KEY_EXCHANGE:
+                            // decrypt A
+                            senderCert = certs.getCert(senderId);
+                            A = RSACipher.decrypt(certs.getPrivateKey(), message.getMessage());
+                            K = DiffieHellman.getSharedKey(new BigInteger(A), dhSecret);
+
+                            // setup symmetric cipher
+                            cipher = new SymmetricCipher(K);
+                            ciphers.put(senderId, cipher);
+
+                            // send him B encrypted by his public key
+                            B = DiffieHellman.getPartialKey(dhSecret).toByteArray();
+                            B = RSACipher.encrypt(senderCert.getPublicKey(), B);
+                            payload = new ChatMessage(id, ChatMessageType.CONFIRM_KEY_EXCHANGE, B);
+                            send(senderId, payload);
+
+                            // update state
+                            dhStates.put(senderId, DHState.KEY_ESTABLISHED);
+                            break;
+                        case CONFIRM_KEY_EXCHANGE:
+                            // decrypt B
+                            senderCert = certs.getCert(senderId);
+                            B = RSACipher.decrypt(certs.getPrivateKey(), message.getMessage());
+                            K = DiffieHellman.getSharedKey(new BigInteger(B), dhSecret);
+
+                            // setup symmetric cipher
+                            cipher = new SymmetricCipher(K);
+                            ciphers.put(senderId, cipher);
+
+                            // update state
+                            dhStates.put(senderId, DHState.KEY_ESTABLISHED);
+
+                            // send all buffered outgoing messages
+                            Queue<String> buffer = getBuffer(senderId);
+                            sendBuffer(senderId, buffer);
+                            break;
+                        case SECRET_MESSAGE:
+                            // decode
+                            cipher = ciphers.get(senderId);
+                            plainText = cipher.decrypt(message.getMessage());
+                            System.out.println("Msg:" + plainText);
+                            display(socket.getInetAddress() + ":" + socket.getPort() + ": " + plainText);
+                            break;
+                        default:
+                            plainText = new String(message.getMessage());
+                            System.out.println("Msg:" + plainText);
+                            display(socket.getInetAddress() + ": " + socket.getPort() + ": " + plainText);
+                    }
+
                 } catch (IOException ex) {
                     display("Could not ready correctly the messages from the connected client: " + ex.getMessage());
                     // clientConnect = false;
@@ -366,9 +472,50 @@ public class P2PClient extends JFrame implements ActionListener {
                     stopClient(this);
                 } catch (ClassNotFoundException ex) {
                     Logger.getLogger(P2PClient.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (GeneralSecurityException ex) {
+                    display("Crypto exception: " + ex.getMessage());
                 }
             }
         }
+
+        private void send(String destinationPort, ChatMessage message) throws IOException {
+            int port = Integer.parseInt(destinationPort);
+            Socket socket = new Socket("localhost", port);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.writeObject(message);
+            out.close();
+            socket.close();
+        }
+
+        private void sendBuffer(String destinationPort, Queue<String> buffer)
+                throws IOException, GeneralSecurityException {
+            if (buffer.isEmpty()) {
+                return;
+            }
+
+            int port = Integer.parseInt(destinationPort);
+            Socket socket = new Socket("localhost", port);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            SymmetricCipher cipher = ciphers.get(destinationPort);
+
+            while (!buffer.isEmpty()) {
+                String outMessage = buffer.poll();
+                byte[] cipherText = cipher.encrypt(outMessage);
+                ChatMessage payload = new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipherText);
+                out.writeObject(payload);
+                display("You: " + outMessage);
+            }
+
+            out.close();
+            socket.close();
+        }
+    }
+
+    private Queue<String> getBuffer(String destinationId) {
+        if (!messageBuffer.containsKey(destinationId)) {
+            messageBuffer.put(destinationId, new LinkedList<String>());
+        }
+        return messageBuffer.get(destinationId);
     }
 
     private class ListenFromClient extends Thread {
@@ -379,7 +526,8 @@ public class P2PClient extends JFrame implements ActionListener {
         public ListenFromClient() {
             try {
                 // the socket used by the server
-                serverSocket = new ServerSocket(Integer.parseInt(tfsPort.getText()));
+                id = tfsPort.getText();
+                serverSocket = new ServerSocket(Integer.parseInt(id));
                 ta.append("Server is listening on port:" + tfsPort.getText() + "\n");
                 ta.setCaretPosition(ta.getText().length() - 1);
                 // clientConnect = false;
