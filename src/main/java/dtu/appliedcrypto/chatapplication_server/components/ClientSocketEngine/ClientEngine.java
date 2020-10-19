@@ -11,6 +11,7 @@ import dtu.appliedcrypto.chatapplication_server.ComponentManager;
 import dtu.appliedcrypto.chatapplication_server.components.ConfigManager;
 import dtu.appliedcrypto.chatapplication_server.components.base.GenericThreadedComponent;
 import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipher;
+import dtu.appliedcrypto.chatapplication_server.crypto.SymmetricCipherUtility;
 import dtu.appliedcrypto.chatapplication_server.exception.ComponentInitException;
 import dtu.appliedcrypto.chatapplication_server.statistics.ServerStatistics;
 
@@ -191,6 +192,9 @@ public class ClientEngine extends GenericThreadedComponent {
                 } else if (msg.equalsIgnoreCase("PRIVATEMESSAGE")) { // default to ordinary message
                     sendMessage(new ChatMessage(id, ChatMessageType.PRIVATE_MESSAGE, msg.getBytes()));
                 } else { // default to ordinary message
+                    if (cipher == null) {
+                        cipher = SymmetricCipherUtility.getCipher(id);
+                    }
                     byte[] cipherText = cipher.encrypt(msg);
                     sendMessage(new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipherText));
                 }
