@@ -51,6 +51,8 @@ public class ClientEngine extends GenericThreadedComponent {
      */
     private Socket socket;
 
+    protected byte[] symmetricKey;
+
     /**
      * Socket Stream reader/writer that will be used throughout the whole
      * connection...
@@ -176,6 +178,7 @@ public class ClientEngine extends GenericThreadedComponent {
             byte[] encrKey = inputObj[1];
             PublicKeyCrypto pkc = new PublicKeyCrypto();
             byte[] decrKey = pkc.decryptText(encrKey, certs.getPrivateKey());
+            symmetricKey = decrKey;
 
             /** Initialize the cipher with the key */
             cipher = SymmetricCipherUtility.getCipher(id, decrKey);
@@ -254,7 +257,7 @@ public class ClientEngine extends GenericThreadedComponent {
                     sendMessage(new ChatMessage(id, ChatMessageType.PRIVATE_MESSAGE, msg.getBytes()));
                 } else { // default to ordinary message
                     if (cipher == null) {
-                        cipher = SymmetricCipherUtility.getCipher(id);
+                        cipher = SymmetricCipherUtility.getCipher(id,symmetricKey);
                     }
                     byte[] cipherText = cipher.encrypt(msg);
                     sendMessage(new ChatMessage(id, ChatMessageType.SECRET_MESSAGE, cipherText));

@@ -456,7 +456,7 @@ public class SocketConnectionHandler implements Runnable {
                 // Switch on the type of message receive
                 switch (cm.getType()) {
                     case SECRET_MESSAGE:
-                        cipher = SymmetricCipherUtility.getCipher(cm.getId());
+                        cipher = SymmetricCipherUtility.getCipher(cm.getId(),symmetricKey);
                         message = cipher.decrypt(cm.getMessage());
                         SocketServerEngine.getInstance().broadcast(userName + ": " + message);
                         break;
@@ -479,7 +479,7 @@ public class SocketConnectionHandler implements Runnable {
                         SocketServerEngine.getInstance().printEstablishedSocketInfo();
                         break;
                     case PRIVATE_MESSAGE:
-                        cipher = SymmetricCipherUtility.getCipher(cm.getId());
+                        cipher = SymmetricCipherUtility.getCipher(cm.getId(),symmetricKey);
                         message = cipher.decrypt(cm.getMessage());
                         String[] temp = message.split(",");
                         int PortNo = Integer.valueOf(temp[0]);
@@ -545,7 +545,7 @@ public class SocketConnectionHandler implements Runnable {
         }
         // write the message to the stream
         try {
-            SymmetricCipher cipher = SymmetricCipherUtility.getCipher(getUserName());
+            SymmetricCipher cipher = SymmetricCipherUtility.getCipher(getUserName(),symmetricKey);
             byte[] cipherText = cipher.encrypt(msg);
             socketWriter.writeObject(cipherText);
         }
